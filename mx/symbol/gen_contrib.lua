@@ -1,0 +1,1790 @@
+-- File content is auto-generated. Do not modify.
+
+local SymbolBase = require('mx._ctypes.symbol').SymbolBase
+local _symbol_creator = require('mx._ctypes.symbol')._symbol_creator
+local NameManager = require('mx.name').NameManager
+local AttrScope = require('mx.attribute').AttrScope
+local _Null = require('mx.base')._Null
+---@class mx.symbol.gen_contrib
+local M = {}
+
+--- 
+--- Applies a 2D adaptive average pooling over a 4D input with the shape of (NCHW).
+--- The pooling kernel and stride sizes are automatically chosen for desired output sizes.
+--- 
+--- - If a single integer is provided for output_size, the output size is \
+---   (N x C x output_size x output_size) for any input (NCHW).
+--- 
+--- - If a tuple of integers (height, width) are provided for output_size, the output size is \
+---   (N x C x height x width) for any input (NCHW).
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\adaptive_avg_pooling.cc:L214
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data
+---@param output_size any @Shape(tuple), optional, default=[] | int (output size) or a tuple of int for output (height, width).
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.AdaptiveAvgPooling2D(data, output_size, name, attr, out, kwargs)
+end
+
+--- 
+--- Perform 2D resizing (upsampling or downsampling) for 4D input using bilinear interpolation.
+--- 
+--- Expected input is a 4 dimensional NDArray (NCHW) and the output
+--- with the shape of (N x C x height x width). 
+--- The key idea of bilinear interpolation is to perform linear interpolation
+--- first in one direction, and then again in the other direction. See the wikipedia of
+--- `Bilinear interpolation  <https://en.wikipedia.org/wiki/Bilinear_interpolation>`_
+--- for more details.
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\bilinear_resize.cc:L193
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data
+---@param like any @Symbol | Resize data to it's shape
+---@param height any @int, optional, default='1' | output height (required, but ignored if scale_height is defined or mode is not "size")
+---@param width any @int, optional, default='1' | output width (required, but ignored if scale_width is defined or mode is not "size")
+---@param scale_height any @float or None, optional, default=None | sampling scale of the height (optional, used in modes "scale" and "odd_scale")
+---@param scale_width any @float or None, optional, default=None | sampling scale of the width (optional, used in modes "scale" and "odd_scale")
+---@param mode any @{'like', 'odd_scale', 'size', 'to_even_down', 'to_even_up', 'to_odd_down', 'to_odd_up'},optional, default='size' | resizing mode. "simple" - output height equals parameter "height" if "scale_height" parameter is not defined or input height multiplied by "scale_height" otherwise. Same for width;"odd_scale" - if original height or width is odd, then result height is calculated like result_h = (original_h - 1) * scale + 1; for scale > 1 the result shape would be like if we did deconvolution with kernel = (1, 1) and stride = (height_scale, width_scale); and for scale < 1 shape would be like we did convolution with kernel = (1, 1) and stride = (int(1 / height_scale), int( 1/ width_scale);"like" - resize first input to the height and width of second input; "to_even_down" - resize input to nearest lower even height and width (if original height is odd then result height = original height - 1);"to_even_up" - resize input to nearest bigger even height and width (if original height is odd then result height = original height + 1);"to_odd_down" - resize input to nearest odd height and width (if original height is odd then result height = original height - 1);"to_odd_up" - resize input to nearest odd height and width (if original height is odd then result height = original height + 1);
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.BilinearResize2D(data, like, height, width, scale_height, scale_width, mode, name, attr, out, kwargs)
+end
+
+--- Connectionist Temporal Classification Loss.
+--- 
+--- ### Note: The existing alias ``contrib_CTCLoss`` is deprecated.
+--- 
+--- The shapes of the inputs and outputs:
+--- 
+--- - **data**: `(sequence_length, batch_size, alphabet_size)`
+--- - **label**: `(batch_size, label_sequence_length)`
+--- - **out**: `(batch_size)`
+--- 
+--- The `data` tensor consists of sequences of activation vectors (without applying softmax),
+--- with i-th channel in the last dimension corresponding to i-th label
+--- for i between 0 and alphabet_size-1 (i.e always 0-indexed).
+--- Alphabet size should include one additional value reserved for blank label.
+--- When `blank_label` is ``"first"``, the ``0``-th channel is be reserved for
+--- activation of blank label, or otherwise if it is "last", ``(alphabet_size-1)``-th channel should be
+--- reserved for blank label.
+--- 
+--- ``label`` is an index matrix of integers. When `blank_label` is ``"first"``,
+--- the value 0 is then reserved for blank label, and should not be passed in this matrix. Otherwise,
+--- when `blank_label` is ``"last"``, the value `(alphabet_size-1)` is reserved for blank label.
+--- 
+--- If a sequence of labels is shorter than *label_sequence_length*, use the special
+--- padding value at the end of the sequence to conform it to the correct
+--- length. The padding value is `0` when `blank_label` is ``"first"``, and `-1` otherwise.
+--- 
+--- For example, suppose the vocabulary is `[a, b, c]`, and in one batch we have three sequences
+--- 'ba', 'cbb', and 'abac'. When `blank_label` is ``"first"``, we can index the labels as
+--- `{'a': 1, 'b': 2, 'c': 3}`, and we reserve the 0-th channel for blank label in data tensor.
+--- The resulting `label` tensor should be padded to be::
+--- 
+---   [[2, 1, 0, 0], [3, 2, 2, 0], [1, 2, 1, 3]]
+--- 
+--- When `blank_label` is ``"last"``, we can index the labels as
+--- `{'a': 0, 'b': 1, 'c': 2}`, and we reserve the channel index 3 for blank label in data tensor.
+--- The resulting `label` tensor should be padded to be::
+--- 
+---   [[1, 0, -1, -1], [2, 1, 1, -1], [0, 1, 0, 2]]
+--- 
+--- ``out`` is a list of CTC loss values, one per example in the batch.
+--- 
+--- See *Connectionist Temporal Classification: Labelling Unsegmented
+--- Sequence Data with Recurrent Neural Networks*, A. Graves *et al*. for more
+--- information on the definition and the algorithm.
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\nn\ctc_loss.cc:L100
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input ndarray
+---@param label any @Symbol | Ground-truth labels for the loss.
+---@param data_lengths any @Symbol | Lengths of data for each of the samples. Only required when use_data_lengths is true.
+---@param label_lengths any @Symbol | Lengths of labels for each of the samples. Only required when use_label_lengths is true.
+---@param use_data_lengths any @boolean, optional, default=0 | Whether the data lenghts are decided by `data_lengths`. If false, the lengths are equal to the max sequence length.
+---@param use_label_lengths any @boolean, optional, default=0 | Whether the label lenghts are decided by `label_lengths`, or derived from `padding_mask`. If false, the lengths are derived from the first occurrence of the value of `padding_mask`. The value of `padding_mask` is ``0`` when first CTC label is reserved for blank, and ``-1`` when last label is reserved for blank. See `blank_label`.
+---@param blank_label any @{'first', 'last'},optional, default='first' | Set the label that is reserved for blank label.If "first", 0-th label is reserved, and label values for tokens in the vocabulary are between ``1`` and ``alphabet_size-1``, and the padding mask is ``-1``. If "last", last label value ``alphabet_size-1`` is reserved for blank label instead, and label values for tokens in the vocabulary are between ``0`` and ``alphabet_size-2``, and the padding mask is ``0``.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.CTCLoss(data, label, data_lengths, label_lengths, use_data_lengths, use_label_lengths, blank_label, name, attr, out, kwargs)
+end
+
+--- Compute 2-D deformable convolution on 4-D input.
+--- 
+--- The deformable convolution operation is described in https://arxiv.org/abs/1703.06211
+--- 
+--- For 2-D deformable convolution, the shapes are
+--- 
+--- - **data**: *(batch_size, channel, height, width)*
+--- - **offset**: *(batch_size, num_deformable_group * kernel[0] * kernel[1] * 2, height, width)*
+--- - **weight**: *(num_filter, channel, kernel[0], kernel[1])*
+--- - **bias**: *(num_filter,)*
+--- - **out**: *(batch_size, num_filter, out_height, out_width)*.
+--- 
+--- Define::
+--- 
+---   f(x,k,p,s,d) = floor((x+2*p-d*(k-1)-1)/s)+1
+--- 
+--- then we have::
+--- 
+---   out_height=f(height, kernel[0], pad[0], stride[0], dilate[0])
+---   out_width=f(width, kernel[1], pad[1], stride[1], dilate[1])
+--- 
+--- If ``no_bias`` is set to be true, then the ``bias`` term is ignored.
+--- 
+--- The default data ``layout`` is *NCHW*, namely *(batch_size, channle, height,
+--- width)*.
+--- 
+--- If ``num_group`` is larger than 1, denoted by *g*, then split the input ``data``
+--- evenly into *g* parts along the channel axis, and also evenly split ``weight``
+--- along the first dimension. Next compute the convolution on the *i*-th part of
+--- the data with the *i*-th weight part. The output is obtained by concating all
+--- the *g* results.
+--- 
+--- If ``num_deformable_group`` is larger than 1, denoted by *dg*, then split the
+--- input ``offset`` evenly into *dg* parts along the channel axis, and also evenly
+--- split ``data`` into *dg* parts along the channel axis. Next compute the
+--- deformable convolution, apply the *i*-th part of the offset on the *i*-th part
+--- of the data.
+--- 
+--- 
+--- Both ``weight`` and ``bias`` are learnable parameters.
+--- 
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\deformable_convolution.cc:L100
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data to the DeformableConvolutionOp.
+---@param offset any @Symbol | Input offset to the DeformableConvolutionOp.
+---@param weight any @Symbol | Weight matrix.
+---@param bias any @Symbol | Bias parameter.
+---@param kernel any @Shape(tuple), required | Convolution kernel size: (h, w) or (d, h, w)
+---@param stride any @Shape(tuple), optional, default=[] | Convolution stride: (h, w) or (d, h, w). Defaults to 1 for each dimension.
+---@param dilate any @Shape(tuple), optional, default=[] | Convolution dilate: (h, w) or (d, h, w). Defaults to 1 for each dimension.
+---@param pad any @Shape(tuple), optional, default=[] | Zero pad for convolution: (h, w) or (d, h, w). Defaults to no padding.
+---@param num_filter any @int, required | Convolution filter(channel) number
+---@param num_group any @int, optional, default='1' | Number of group partitions.
+---@param num_deformable_group any @int, optional, default='1' | Number of deformable group partitions.
+---@param workspace any @long (non-negative), optional, default=1024 | Maximum temperal workspace allowed for convolution (MB).
+---@param no_bias any @boolean, optional, default=0 | Whether to disable bias parameter.
+---@param layout any @{None, 'NCDHW', 'NCHW', 'NCW'},optional, default='None' | Set layout for input, output and weight. Empty for    default layout: NCW for 1d, NCHW for 2d and NCDHW for 3d.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.DeformableConvolution(data, offset, weight, bias, kernel, stride, dilate, pad, num_filter, num_group, num_deformable_group, workspace, no_bias, layout, name, attr, out, kwargs)
+end
+
+--- Performs deformable position-sensitive region-of-interest pooling on inputs.
+--- The DeformablePSROIPooling operation is described in https://arxiv.org/abs/1703.06211 .batch_size will change to the number of region bounding boxes after DeformablePSROIPooling
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data to the pooling operator, a 4D Feature maps
+---@param rois any @Symbol | Bounding box coordinates, a 2D array of [[batch_index, x1, y1, x2, y2]]. (x1, y1) and (x2, y2) are top left and down right corners of designated region of interest. batch_index indicates the index of corresponding image in the input data
+---@param trans any @Symbol | transition parameter
+---@param spatial_scale any @float, required | Ratio of input feature map height (or w) to raw image height (or w). Equals the reciprocal of total stride in convolutional layers
+---@param output_dim any @int, required | fix output dim
+---@param group_size any @int, required | fix group size
+---@param pooled_size any @int, required | fix pooled size
+---@param part_size any @int, optional, default='0' | fix part size
+---@param sample_per_part any @int, optional, default='1' | fix samples per part
+---@param trans_std any @float, optional, default=0 | fix transition std
+---@param no_trans any @boolean, optional, default=0 | Whether to disable trans parameter.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.DeformablePSROIPooling(data, rois, trans, spatial_scale, output_dim, group_size, pooled_size, part_size, sample_per_part, trans_std, no_trans, name, attr, out, kwargs)
+end
+
+--- Convert multibox detection predictions.
+--- This function support variable length of positional input.
+---
+---
+---@param cls_prob any @Symbol | Class probabilities.
+---@param loc_pred any @Symbol | Location regression predictions.
+---@param anchor any @Symbol | Multibox prior anchor boxes
+---@param clip any @boolean, optional, default=1 | Clip out-of-boundary boxes.
+---@param threshold any @float, optional, default=0.00999999978 | Threshold to be a positive prediction.
+---@param background_id any @int, optional, default='0' | Background id.
+---@param nms_threshold any @float, optional, default=0.5 | Non-maximum suppression threshold.
+---@param force_suppress any @boolean, optional, default=0 | Suppress all detections regardless of class_id.
+---@param variances any @, optional, default=[0.1,0.1,0.2,0.2] | Variances to be decoded from box regression output.
+---@param nms_topk any @int, optional, default='-1' | Keep maximum top k detections before nms, -1 for no limit.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.MultiBoxDetection(cls_prob, loc_pred, anchor, clip, threshold, background_id, nms_threshold, force_suppress, variances, nms_topk, name, attr, out, kwargs)
+end
+
+--- Generate prior(anchor) boxes from data, sizes and ratios.
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data.
+---@param sizes any @, optional, default=[1] | List of sizes of generated MultiBoxPriores.
+---@param ratios any @, optional, default=[1] | List of aspect ratios of generated MultiBoxPriores.
+---@param clip any @boolean, optional, default=0 | Whether to clip out-of-boundary boxes.
+---@param steps any @, optional, default=[-1,-1] | Priorbox step across y and x, -1 for auto calculation.
+---@param offsets any @, optional, default=[0.5,0.5] | Priorbox center offsets, y and x respectively
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.MultiBoxPrior(data, sizes, ratios, clip, steps, offsets, name, attr, out, kwargs)
+end
+
+--- Compute Multibox training targets
+--- This function support variable length of positional input.
+---
+---
+---@param anchor any @Symbol | Generated anchor boxes.
+---@param label any @Symbol | Object detection labels.
+---@param cls_pred any @Symbol | Class predictions.
+---@param overlap_threshold any @float, optional, default=0.5 | Anchor-GT overlap threshold to be regarded as a positive match.
+---@param ignore_label any @float, optional, default=-1 | Label for ignored anchors.
+---@param negative_mining_ratio any @float, optional, default=-1 | Max negative to positive samples ratio, use -1 to disable mining
+---@param negative_mining_thresh any @float, optional, default=0.5 | Threshold used for negative mining.
+---@param minimum_negative_samples any @int, optional, default='0' | Minimum number of negative samples.
+---@param variances any @, optional, default=[0.1,0.1,0.2,0.2] | Variances to be encoded in box regression target.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.MultiBoxTarget(anchor, label, cls_pred, overlap_threshold, ignore_label, negative_mining_ratio, negative_mining_thresh, minimum_negative_samples, variances, name, attr, out, kwargs)
+end
+
+--- Generate region proposals via RPN
+--- This function support variable length of positional input.
+---
+---
+---@param cls_prob any @Symbol | Score of how likely proposal is object.
+---@param bbox_pred any @Symbol | BBox Predicted deltas from anchors for proposals
+---@param im_info any @Symbol | Image size and scale.
+---@param rpn_pre_nms_top_n any @int, optional, default='6000' | Number of top scoring boxes to keep before applying NMS to RPN proposals
+---@param rpn_post_nms_top_n any @int, optional, default='300' | Number of top scoring boxes to keep after applying NMS to RPN proposals
+---@param threshold any @float, optional, default=0.699999988 | NMS value, below which to suppress.
+---@param rpn_min_size any @int, optional, default='16' | Minimum height or width in proposal
+---@param scales any @, optional, default=[4,8,16,32] | Used to generate anchor windows by enumerating scales
+---@param ratios any @, optional, default=[0.5,1,2] | Used to generate anchor windows by enumerating ratios
+---@param feature_stride any @int, optional, default='16' | The size of the receptive field each unit in the convolution layer of the rpn,for example the product of all stride's prior to this layer.
+---@param output_score any @boolean, optional, default=0 | Add score to outputs
+---@param iou_loss any @boolean, optional, default=0 | Usage of IoU Loss
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.MultiProposal(cls_prob, bbox_pred, im_info, rpn_pre_nms_top_n, rpn_post_nms_top_n, threshold, rpn_min_size, scales, ratios, feature_stride, output_score, iou_loss, name, attr, out, kwargs)
+end
+
+--- Performs region-of-interest pooling on inputs. Resize bounding box coordinates by spatial_scale and crop input feature maps accordingly. The cropped feature maps are pooled by max pooling to a fixed size output indicated by pooled_size. batch_size will change to the number of region bounding boxes after PSROIPooling
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data to the pooling operator, a 4D Feature maps
+---@param rois any @Symbol | Bounding box coordinates, a 2D array of [[batch_index, x1, y1, x2, y2]]. (x1, y1) and (x2, y2) are top left and down right corners of designated region of interest. batch_index indicates the index of corresponding image in the input data
+---@param spatial_scale any @float, required | Ratio of input feature map height (or w) to raw image height (or w). Equals the reciprocal of total stride in convolutional layers
+---@param output_dim any @int, required | fix output dim
+---@param pooled_size any @int, required | fix pooled size
+---@param group_size any @int, optional, default='0' | fix group size
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.PSROIPooling(data, rois, spatial_scale, output_dim, pooled_size, group_size, name, attr, out, kwargs)
+end
+
+--- Generate region proposals via RPN
+--- This function support variable length of positional input.
+---
+---
+---@param cls_prob any @Symbol | Score of how likely proposal is object.
+---@param bbox_pred any @Symbol | BBox Predicted deltas from anchors for proposals
+---@param im_info any @Symbol | Image size and scale.
+---@param rpn_pre_nms_top_n any @int, optional, default='6000' | Number of top scoring boxes to keep before applying NMS to RPN proposals
+---@param rpn_post_nms_top_n any @int, optional, default='300' | Number of top scoring boxes to keep after applying NMS to RPN proposals
+---@param threshold any @float, optional, default=0.699999988 | NMS value, below which to suppress.
+---@param rpn_min_size any @int, optional, default='16' | Minimum height or width in proposal
+---@param scales any @, optional, default=[4,8,16,32] | Used to generate anchor windows by enumerating scales
+---@param ratios any @, optional, default=[0.5,1,2] | Used to generate anchor windows by enumerating ratios
+---@param feature_stride any @int, optional, default='16' | The size of the receptive field each unit in the convolution layer of the rpn,for example the product of all stride's prior to this layer.
+---@param output_score any @boolean, optional, default=0 | Add score to outputs
+---@param iou_loss any @boolean, optional, default=0 | Usage of IoU Loss
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.Proposal(cls_prob, bbox_pred, im_info, rpn_pre_nms_top_n, rpn_post_nms_top_n, threshold, rpn_min_size, scales, ratios, feature_stride, output_score, iou_loss, name, attr, out, kwargs)
+end
+
+--- 
+--- This operator takes a 4D feature map as an input array and region proposals as `rois`,
+--- then align the feature map over sub-regions of input and produces a fixed-sized output array.
+--- This operator is typically used in Faster R-CNN & Mask R-CNN networks.
+--- 
+--- Different from ROI pooling, ROI Align removes the harsh quantization, properly aligning
+--- the extracted features with the input. RoIAlign computes the value of each sampling point
+--- by bilinear interpolation from the nearby grid points on the feature map. No quantization is
+--- performed on any coordinates involved in the RoI, its bins, or the sampling points.
+--- Bilinear interpolation is used to compute the exact values of the
+--- input features at four regularly sampled locations in each RoI bin.
+--- Then the feature map can be aggregated by avgpooling.
+--- 
+--- 
+--- ### References
+--- ----------
+--- 
+--- He, Kaiming, et al. "Mask R-CNN." ICCV, 2017
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\roi_align.cc:L538
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data to the pooling operator, a 4D Feature maps
+---@param rois any @Symbol | Bounding box coordinates, a 2D array
+---@param pooled_size any @Shape(tuple), required | ROI Align output roi feature map height and width: (h, w)
+---@param spatial_scale any @float, required | Ratio of input feature map height (or w) to raw image height (or w). Equals the reciprocal of total stride in convolutional layers
+---@param sample_ratio any @int, optional, default='-1' | Optional sampling ratio of ROI align, using adaptive size by default.
+---@param position_sensitive any @boolean, optional, default=0 | Whether to perform position-sensitive RoI pooling. PSRoIPooling is first proposaled by R-FCN and it can reduce the input channels by ph*pw times, where (ph, pw) is the pooled_size
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.ROIAlign(data, rois, pooled_size, spatial_scale, sample_ratio, position_sensitive, name, attr, out, kwargs)
+end
+
+--- Maps integer indices to vector representations (embeddings).
+--- 
+--- note:: ``contrib.SparseEmbedding`` is deprecated, use ``Embedding`` instead.
+--- 
+--- This operator maps words to real-valued vectors in a high-dimensional space,
+--- called word embeddings. These embeddings can capture semantic and syntactic properties of the words.
+--- For example, it has been noted that in the learned embedding spaces, similar words tend
+--- to be close to each other and dissimilar words far apart.
+--- 
+--- For an input array of shape (d1, ..., dK),
+--- the shape of an output array is (d1, ..., dK, output_dim).
+--- All the input values should be integers in the range [0, input_dim).
+--- 
+--- If the input_dim is ip0 and output_dim is op0, then shape of the embedding weight matrix must be
+--- (ip0, op0).
+--- 
+--- The storage type of the gradient will be `row_sparse`.
+--- 
+--- .. Note::
+--- 
+---     `SparseEmbedding` is designed for the use case where `input_dim` is very large (e.g. 100k).
+---     The operator is available on both CPU and GPU.
+---     When `deterministic` is set to `True`, the accumulation of gradients follows a
+---     deterministic order if a feature appears multiple times in the input. However, the
+---     accumulation is usually slower when the order is enforced on GPU.
+---     When the operator is used on the GPU, the recommended value for `deterministic` is `True`.
+--- 
+--- ### Examples
+--- 
+---   input_dim = 4
+---   output_dim = 5
+--- 
+---   // Each row in weight matrix y represents a word. So, y = (w0,w1,w2,w3)
+---   y = [[  0.,   1.,   2.,   3.,   4.],
+---        [  5.,   6.,   7.,   8.,   9.],
+---        [ 10.,  11.,  12.,  13.,  14.],
+---        [ 15.,  16.,  17.,  18.,  19.]]
+--- 
+---   // Input array x represents n-grams(2-gram). So, x = [(w1,w3), (w0,w2)]
+---   x = [[ 1.,  3.],
+---        [ 0.,  2.]]
+--- 
+---   // Mapped input x to its vector representation y.
+---   SparseEmbedding(x, y, 4, 5) = [[[  5.,   6.,   7.,   8.,   9.],
+---                                  [ 15.,  16.,  17.,  18.,  19.]],
+--- 
+---                                 [[  0.,   1.,   2.,   3.,   4.],
+---                                  [ 10.,  11.,  12.,  13.,  14.]]]
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\tensor\indexing_op.cc:L595
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | The input array to the embedding operator.
+---@param weight any @Symbol | The embedding weight matrix.
+---@param input_dim any @int, required | Vocabulary size of the input indices.
+---@param output_dim any @int, required | Dimension of the embedding vectors.
+---@param dtype any @{'float16', 'float32', 'float64', 'int32', 'int64', 'int8', 'uint8'},optional, default='float32' | Data type of weight.
+---@param sparse_grad any @boolean, optional, default=0 | Compute row sparse gradient in the backward calculation. If set to True, the grad's storage type is row_sparse.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.SparseEmbedding(data, weight, input_dim, output_dim, dtype, sparse_grad, name, attr, out, kwargs)
+end
+
+--- Batch normalization.
+--- 
+--- Normalizes a data batch by mean and variance, and applies a scale ``gamma`` as
+--- well as offset ``beta``.
+--- Standard BN [1]_ implementation only normalize the data within each device.
+--- SyncBN normalizes the input within the whole mini-batch.
+--- We follow the sync-onece implmentation described in the paper [2]_.
+--- 
+--- Assume the input has more than one dimension and we normalize along axis 1.
+--- We first compute the mean and variance along this axis:
+--- 
+--- .. math::
+--- 
+---   data\_mean[i] = mean(data[:,i,:,...]) \\
+---   data\_var[i] = var(data[:,i,:,...])
+--- 
+--- Then compute the normalized output, which has the same shape as input, as following:
+--- 
+--- .. math::
+--- 
+---   out[:,i,:,...] = \frac{data[:,i,:,...] - data\_mean[i]}{\sqrt{data\_var[i]+\epsilon}} * gamma[i] + beta[i]
+--- 
+--- Both *mean* and *var* returns a scalar by treating the input as a vector.
+--- 
+--- Assume the input has size *k* on axis 1, then both ``gamma`` and ``beta``
+--- have shape *(k,)*. If ``output_mean_var`` is set to be true, then outputs both ``data_mean`` and
+--- ``data_var`` as well, which are needed for the backward pass.
+--- 
+--- Besides the inputs and the outputs, this operator accepts two auxiliary
+--- states, ``moving_mean`` and ``moving_var``, which are *k*-length
+--- vectors. They are global statistics for the whole dataset, which are updated
+--- by::
+--- 
+---   moving_mean = moving_mean * momentum + data_mean * (1 - momentum)
+---   moving_var = moving_var * momentum + data_var * (1 - momentum)
+--- 
+--- If ``use_global_stats`` is set to be true, then ``moving_mean`` and
+--- ``moving_var`` are used instead of ``data_mean`` and ``data_var`` to compute
+--- the output. It is often used during inference.
+--- 
+--- Both ``gamma`` and ``beta`` are learnable parameters. But if ``fix_gamma`` is true,
+--- then set ``gamma`` to 1 and its gradient to 0.
+--- 
+--- Reference:
+---   .. [1] Ioffe, Sergey, and Christian Szegedy. "Batch normalization: Accelerating \
+---     deep network training by reducing internal covariate shift." *ICML 2015*
+---   .. [2] Hang Zhang, Kristin Dana, Jianping Shi, Zhongyue Zhang, Xiaogang Wang, \
+---     Ambrish Tyagi, and Amit Agrawal. "Context Encoding for Semantic Segmentation." *CVPR 2018*
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\sync_batch_norm.cc:L97
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data to batch normalization
+---@param gamma any @Symbol | gamma array
+---@param beta any @Symbol | beta array
+---@param moving_mean any @Symbol | running mean of input
+---@param moving_var any @Symbol | running variance of input
+---@param eps any @float, optional, default=0.00100000005 | Epsilon to prevent div 0
+---@param momentum any @float, optional, default=0.899999976 | Momentum for moving average
+---@param fix_gamma any @boolean, optional, default=1 | Fix gamma while training
+---@param use_global_stats any @boolean, optional, default=0 | Whether use global moving statistics instead of local batch-norm. This will force change batch-norm into a scale shift operator.
+---@param output_mean_var any @boolean, optional, default=0 | Output All,normal mean and var
+---@param ndev any @int, optional, default='1' | The count of GPU devices
+---@param key any @string, required | Hash key for synchronization, please set the same hash key for same layer, Block.prefix is typically used as in :class:`gluon.nn.contrib.SyncBatchNorm`.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.SyncBatchNorm(data, gamma, beta, moving_mean, moving_var, eps, momentum, fix_gamma, use_global_stats, output_mean_var, ndev, key, name, attr, out, kwargs)
+end
+
+--- 
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | source input
+---@param scalar any @float | scalar input
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.backward_gradientmultiplier(data, scalar, name, attr, out, kwargs)
+end
+
+--- 
+--- This function support variable length of positional input.
+---
+---
+
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.backward_hawkesll(name, attr, out, kwargs)
+end
+
+--- 
+--- This function support variable length of positional input.
+---
+---
+
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.backward_index_copy(name, attr, out, kwargs)
+end
+
+--- 
+--- This function support variable length of positional input.
+---
+---
+
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.backward_quadratic(name, attr, out, kwargs)
+end
+
+--- Compute bipartite matching.
+---   The matching is performed on score matrix with shape [B, N, M]
+---   - B: batch_size
+---   - N: number of rows to match
+---   - M: number of columns as reference to be matched against.
+--- 
+---   Returns:
+---   x : matched column indices. -1 indicating non-matched elements in rows.
+---   y : matched row indices.
+--- 
+---   Note::
+--- 
+---     Zero gradients are back-propagated in this op for now.
+--- 
+---   Example::
+--- 
+---     s = [[0.5, 0.6], [0.1, 0.2], [0.3, 0.4]]
+---     x, y = bipartite_matching(x, threshold=1e-12, is_ascend=False)
+---     x = [1, -1, 0]
+---     y = [2, 0]
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\bounding_box.cc:L180
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | The input
+---@param is_ascend any @boolean, optional, default=0 | Use ascend order for scores instead of descending. Please set threshold accordingly.
+---@param threshold any @float, required | Ignore matching when score < thresh, if is_ascend=false, or ignore score > thresh, if is_ascend=true.
+---@param topk any @int, optional, default='-1' | Limit the number of matches to topk, set -1 for no limit
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.bipartite_matching(data, is_ascend, threshold, topk, name, attr, out, kwargs)
+end
+
+--- 
+--- Given an n-d NDArray data, and a 1-d NDArray index,
+--- the operator produces an un-predeterminable shaped n-d NDArray out,
+--- which stands for the rows in x where the corresonding element in index is non-zero.
+--- 
+--- >>> data = mx.nd.array([[1, 2, 3],[4, 5, 6],[7, 8, 9]])
+--- >>> index = mx.nd.array([0, 1, 0])
+--- >>> out = mx.nd.contrib.boolean_mask(data, index)
+--- >>> out
+--- 
+--- [[4. 5. 6.]]
+--- <NDArray 1x3 @cpu(0)>
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\boolean_mask.cc:L211
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Data
+---@param index any @Symbol | Mask
+---@param axis any @int, optional, default='0' | An integer that represents the axis in NDArray to mask from.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.boolean_mask(data, index, axis, name, attr, out, kwargs)
+end
+
+--- Bounding box overlap of two arrays.
+---   The overlap is defined as Intersection-over-Union, aka, IOU.
+---   - lhs: (a_1, a_2, ..., a_n, 4) array
+---   - rhs: (b_1, b_2, ..., b_n, 4) array
+---   - output: (a_1, a_2, ..., a_n, b_1, b_2, ..., b_n) array
+--- 
+---   Note::
+--- 
+---     Zero gradients are back-propagated in this op for now.
+--- 
+---   Example::
+--- 
+---     x = [[0.5, 0.5, 1.0, 1.0], [0.0, 0.0, 0.5, 0.5]]
+---     y = [[0.25, 0.25, 0.75, 0.75]]
+---     box_iou(x, y, format='corner') = [[0.1428], [0.1428]]
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\bounding_box.cc:L134
+--- This function support variable length of positional input.
+---
+---
+---@param lhs any @Symbol | The first input
+---@param rhs any @Symbol | The second input
+---@param format any @{'center', 'corner'},optional, default='corner' | The box encoding type.  "corner" means boxes are encoded as [xmin, ymin, xmax, ymax], "center" means boxes are encodes as [x, y, width, height].
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.box_iou(lhs, rhs, format, name, attr, out, kwargs)
+end
+
+--- Apply non-maximum suppression to input.
+--- 
+--- The output will be sorted in descending order according to `score`. Boxes with
+--- overlaps larger than `overlap_thresh`, smaller scores and background boxes
+--- will be removed and filled with -1, the corresponding position will be recorded
+--- for backward propogation.
+--- 
+--- During back-propagation, the gradient will be copied to the original
+--- position according to the input index. For positions that have been suppressed,
+--- the in_grad will be assigned 0.
+--- In summary, gradients are sticked to its boxes, will either be moved or discarded
+--- according to its original index in input.
+--- 
+--- Input requirements::
+--- 
+---   1. Input tensor have at least 2 dimensions, (n, k), any higher dims will be regarded
+---   as batch, e.g. (a, b, c, d, n, k) == (a*b*c*d, n, k)
+---   2. n is the number of boxes in each batch
+---   3. k is the width of each box item.
+--- 
+--- By default, a box is [id, score, xmin, ymin, xmax, ymax, ...],
+--- additional elements are allowed.
+--- 
+--- - `id_index`: optional, use -1 to ignore, useful if `force_suppress=False`, which means
+---   we will skip highly overlapped boxes if one is `apple` while the other is `car`.
+--- 
+--- - `background_id`: optional, default=-1, class id for background boxes, useful
+---   when `id_index >= 0` which means boxes with background id will be filtered before nms.
+--- 
+--- - `coord_start`: required, default=2, the starting index of the 4 coordinates.
+---   Two formats are supported:
+--- 
+---     - `corner`: [xmin, ymin, xmax, ymax]
+--- 
+---     - `center`: [x, y, width, height]
+--- 
+--- - `score_index`: required, default=1, box score/confidence.
+---   When two boxes overlap IOU > `overlap_thresh`, the one with smaller score will be suppressed.
+--- 
+--- - `in_format` and `out_format`: default='corner', specify in/out box formats.
+--- 
+--- ### Examples
+--- 
+---   x = [[0, 0.5, 0.1, 0.1, 0.2, 0.2], [1, 0.4, 0.1, 0.1, 0.2, 0.2],
+---        [0, 0.3, 0.1, 0.1, 0.14, 0.14], [2, 0.6, 0.5, 0.5, 0.7, 0.8]]
+---   box_nms(x, overlap_thresh=0.1, coord_start=2, score_index=1, id_index=0,
+---       force_suppress=True, in_format='corner', out_typ='corner') =
+---       [[2, 0.6, 0.5, 0.5, 0.7, 0.8], [0, 0.5, 0.1, 0.1, 0.2, 0.2],
+---        [-1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1]]
+---   out_grad = [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+---               [0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.4, 0.4, 0.4, 0.4, 0.4, 0.4]]
+---   -- exe.backward
+---   in_grad = [[0.2, 0.2, 0.2, 0.2, 0.2, 0.2], [0, 0, 0, 0, 0, 0],
+---              [0, 0, 0, 0, 0, 0], [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]]
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\bounding_box.cc:L93
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | The input
+---@param overlap_thresh any @float, optional, default=0.5 | Overlapping(IoU) threshold to suppress object with smaller score.
+---@param valid_thresh any @float, optional, default=0 | Filter input boxes to those whose scores greater than valid_thresh.
+---@param topk any @int, optional, default='-1' | Apply nms to topk boxes with descending scores, -1 to no restriction.
+---@param coord_start any @int, optional, default='2' | Start index of the consecutive 4 coordinates.
+---@param score_index any @int, optional, default='1' | Index of the scores/confidence of boxes.
+---@param id_index any @int, optional, default='-1' | Optional, index of the class categories, -1 to disable.
+---@param background_id any @int, optional, default='-1' | Optional, id of the background class which will be ignored in nms.
+---@param force_suppress any @boolean, optional, default=0 | Optional, if set false and id_index is provided, nms will only apply to boxes belongs to the same category
+---@param in_format any @{'center', 'corner'},optional, default='corner' | The input box encoding type.  "corner" means boxes are encoded as [xmin, ymin, xmax, ymax], "center" means boxes are encodes as [x, y, width, height].
+---@param out_format any @{'center', 'corner'},optional, default='corner' | The output box encoding type.  "corner" means boxes are encoded as [xmin, ymin, xmax, ymax], "center" means boxes are encodes as [x, y, width, height].
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.box_nms(data, overlap_thresh, valid_thresh, topk, coord_start, score_index, id_index, background_id, force_suppress, in_format, out_format, name, attr, out, kwargs)
+end
+
+--- Apply non-maximum suppression to input.
+--- 
+--- The output will be sorted in descending order according to `score`. Boxes with
+--- overlaps larger than `overlap_thresh`, smaller scores and background boxes
+--- will be removed and filled with -1, the corresponding position will be recorded
+--- for backward propogation.
+--- 
+--- During back-propagation, the gradient will be copied to the original
+--- position according to the input index. For positions that have been suppressed,
+--- the in_grad will be assigned 0.
+--- In summary, gradients are sticked to its boxes, will either be moved or discarded
+--- according to its original index in input.
+--- 
+--- Input requirements::
+--- 
+---   1. Input tensor have at least 2 dimensions, (n, k), any higher dims will be regarded
+---   as batch, e.g. (a, b, c, d, n, k) == (a*b*c*d, n, k)
+---   2. n is the number of boxes in each batch
+---   3. k is the width of each box item.
+--- 
+--- By default, a box is [id, score, xmin, ymin, xmax, ymax, ...],
+--- additional elements are allowed.
+--- 
+--- - `id_index`: optional, use -1 to ignore, useful if `force_suppress=False`, which means
+---   we will skip highly overlapped boxes if one is `apple` while the other is `car`.
+--- 
+--- - `background_id`: optional, default=-1, class id for background boxes, useful
+---   when `id_index >= 0` which means boxes with background id will be filtered before nms.
+--- 
+--- - `coord_start`: required, default=2, the starting index of the 4 coordinates.
+---   Two formats are supported:
+--- 
+---     - `corner`: [xmin, ymin, xmax, ymax]
+--- 
+---     - `center`: [x, y, width, height]
+--- 
+--- - `score_index`: required, default=1, box score/confidence.
+---   When two boxes overlap IOU > `overlap_thresh`, the one with smaller score will be suppressed.
+--- 
+--- - `in_format` and `out_format`: default='corner', specify in/out box formats.
+--- 
+--- ### Examples
+--- 
+---   x = [[0, 0.5, 0.1, 0.1, 0.2, 0.2], [1, 0.4, 0.1, 0.1, 0.2, 0.2],
+---        [0, 0.3, 0.1, 0.1, 0.14, 0.14], [2, 0.6, 0.5, 0.5, 0.7, 0.8]]
+---   box_nms(x, overlap_thresh=0.1, coord_start=2, score_index=1, id_index=0,
+---       force_suppress=True, in_format='corner', out_typ='corner') =
+---       [[2, 0.6, 0.5, 0.5, 0.7, 0.8], [0, 0.5, 0.1, 0.1, 0.2, 0.2],
+---        [-1, -1, -1, -1, -1, -1], [-1, -1, -1, -1, -1, -1]]
+---   out_grad = [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+---               [0.3, 0.3, 0.3, 0.3, 0.3, 0.3], [0.4, 0.4, 0.4, 0.4, 0.4, 0.4]]
+---   -- exe.backward
+---   in_grad = [[0.2, 0.2, 0.2, 0.2, 0.2, 0.2], [0, 0, 0, 0, 0, 0],
+---              [0, 0, 0, 0, 0, 0], [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]]
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\bounding_box.cc:L93
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | The input
+---@param overlap_thresh any @float, optional, default=0.5 | Overlapping(IoU) threshold to suppress object with smaller score.
+---@param valid_thresh any @float, optional, default=0 | Filter input boxes to those whose scores greater than valid_thresh.
+---@param topk any @int, optional, default='-1' | Apply nms to topk boxes with descending scores, -1 to no restriction.
+---@param coord_start any @int, optional, default='2' | Start index of the consecutive 4 coordinates.
+---@param score_index any @int, optional, default='1' | Index of the scores/confidence of boxes.
+---@param id_index any @int, optional, default='-1' | Optional, index of the class categories, -1 to disable.
+---@param background_id any @int, optional, default='-1' | Optional, id of the background class which will be ignored in nms.
+---@param force_suppress any @boolean, optional, default=0 | Optional, if set false and id_index is provided, nms will only apply to boxes belongs to the same category
+---@param in_format any @{'center', 'corner'},optional, default='corner' | The input box encoding type.  "corner" means boxes are encoded as [xmin, ymin, xmax, ymax], "center" means boxes are encodes as [x, y, width, height].
+---@param out_format any @{'center', 'corner'},optional, default='corner' | The output box encoding type.  "corner" means boxes are encoded as [xmin, ymin, xmax, ymax], "center" means boxes are encodes as [x, y, width, height].
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.box_non_maximum_suppression(data, overlap_thresh, valid_thresh, topk, coord_start, score_index, id_index, background_id, force_suppress, in_format, out_format, name, attr, out, kwargs)
+end
+
+--- Apply CountSketch to input: map a d-dimension data to k-dimension data"
+--- 
+--- ### Note: `count_sketch` is only available on GPU.
+--- 
+--- Assume input data has shape (N, d), sign hash table s has shape (N, d),
+--- index hash table h has shape (N, d) and mapping dimension out_dim = k,
+--- each element in s is either +1 or -1, each element in h is random integer from 0 to k-1.
+--- Then the operator computs:
+--- 
+--- .. math::
+---    out[h[i]] += data[i] * s[i]
+--- 
+--- ### Example
+--- 
+---    out_dim = 5
+---    x = [[1.2, 2.5, 3.4],[3.2, 5.7, 6.6]]
+---    h = [[0, 3, 4]]
+---    s = [[1, -1, 1]]
+---    mx.contrib.ndarray.count_sketch(data=x, h=h, s=s, out_dim = 5) = [[1.2, 0, 0, -2.5, 3.4],
+---                                                                      [3.2, 0, 0, -5.7, 6.6]]
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\count_sketch.cc:L67
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data to the CountSketchOp.
+---@param h any @Symbol | The index vector
+---@param s any @Symbol | The sign vector
+---@param out_dim any @int, required | The output dimension.
+---@param processing_batch_size any @int, optional, default='32' | How many sketch vectors to process at one time.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.count_sketch(data, h, s, out_dim, processing_batch_size, name, attr, out, kwargs)
+end
+
+--- Connectionist Temporal Classification Loss.
+--- 
+--- ### Note: The existing alias ``contrib_CTCLoss`` is deprecated.
+--- 
+--- The shapes of the inputs and outputs:
+--- 
+--- - **data**: `(sequence_length, batch_size, alphabet_size)`
+--- - **label**: `(batch_size, label_sequence_length)`
+--- - **out**: `(batch_size)`
+--- 
+--- The `data` tensor consists of sequences of activation vectors (without applying softmax),
+--- with i-th channel in the last dimension corresponding to i-th label
+--- for i between 0 and alphabet_size-1 (i.e always 0-indexed).
+--- Alphabet size should include one additional value reserved for blank label.
+--- When `blank_label` is ``"first"``, the ``0``-th channel is be reserved for
+--- activation of blank label, or otherwise if it is "last", ``(alphabet_size-1)``-th channel should be
+--- reserved for blank label.
+--- 
+--- ``label`` is an index matrix of integers. When `blank_label` is ``"first"``,
+--- the value 0 is then reserved for blank label, and should not be passed in this matrix. Otherwise,
+--- when `blank_label` is ``"last"``, the value `(alphabet_size-1)` is reserved for blank label.
+--- 
+--- If a sequence of labels is shorter than *label_sequence_length*, use the special
+--- padding value at the end of the sequence to conform it to the correct
+--- length. The padding value is `0` when `blank_label` is ``"first"``, and `-1` otherwise.
+--- 
+--- For example, suppose the vocabulary is `[a, b, c]`, and in one batch we have three sequences
+--- 'ba', 'cbb', and 'abac'. When `blank_label` is ``"first"``, we can index the labels as
+--- `{'a': 1, 'b': 2, 'c': 3}`, and we reserve the 0-th channel for blank label in data tensor.
+--- The resulting `label` tensor should be padded to be::
+--- 
+---   [[2, 1, 0, 0], [3, 2, 2, 0], [1, 2, 1, 3]]
+--- 
+--- When `blank_label` is ``"last"``, we can index the labels as
+--- `{'a': 0, 'b': 1, 'c': 2}`, and we reserve the channel index 3 for blank label in data tensor.
+--- The resulting `label` tensor should be padded to be::
+--- 
+---   [[1, 0, -1, -1], [2, 1, 1, -1], [0, 1, 0, 2]]
+--- 
+--- ``out`` is a list of CTC loss values, one per example in the batch.
+--- 
+--- See *Connectionist Temporal Classification: Labelling Unsegmented
+--- Sequence Data with Recurrent Neural Networks*, A. Graves *et al*. for more
+--- information on the definition and the algorithm.
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\nn\ctc_loss.cc:L100
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input ndarray
+---@param label any @Symbol | Ground-truth labels for the loss.
+---@param data_lengths any @Symbol | Lengths of data for each of the samples. Only required when use_data_lengths is true.
+---@param label_lengths any @Symbol | Lengths of labels for each of the samples. Only required when use_label_lengths is true.
+---@param use_data_lengths any @boolean, optional, default=0 | Whether the data lenghts are decided by `data_lengths`. If false, the lengths are equal to the max sequence length.
+---@param use_label_lengths any @boolean, optional, default=0 | Whether the label lenghts are decided by `label_lengths`, or derived from `padding_mask`. If false, the lengths are derived from the first occurrence of the value of `padding_mask`. The value of `padding_mask` is ``0`` when first CTC label is reserved for blank, and ``-1`` when last label is reserved for blank. See `blank_label`.
+---@param blank_label any @{'first', 'last'},optional, default='first' | Set the label that is reserved for blank label.If "first", 0-th label is reserved, and label values for tokens in the vocabulary are between ``1`` and ``alphabet_size-1``, and the padding mask is ``-1``. If "last", last label value ``alphabet_size-1`` is reserved for blank label instead, and label values for tokens in the vocabulary are between ``0`` and ``alphabet_size-2``, and the padding mask is ``0``.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.ctc_loss(data, label, data_lengths, label_lengths, use_data_lengths, use_label_lengths, blank_label, name, attr, out, kwargs)
+end
+
+--- Dequantize the input tensor into a float tensor.
+--- min_range and max_range are scalar floats that specify the range for
+--- the output data.
+--- 
+--- When input data type is `uint8`, the output is calculated using the following equation:
+--- 
+--- `out[i] = in[i] * (max_range - min_range) / 255.0`,
+--- 
+--- When input data type is `int8`, the output is calculate using the following equation
+--- by keep zero centered for the quantized value:
+--- 
+--- `out[i] = in[i] * MaxAbs(min_range, max_range) / 127.0`,
+--- 
+--- .. Note::
+---     This operator only supports forward propogation. DO NOT use it in training.
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\quantization\dequantize.cc:L83
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | A ndarray/symbol of type `uint8`
+---@param min_range any @Symbol | The minimum scalar value possibly produced for the input in float32
+---@param max_range any @Symbol | The maximum scalar value possibly produced for the input in float32
+---@param out_type any @{'float32'},optional, default='float32' | Output data type.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.dequantize(data, min_range, max_range, out_type, name, attr, out, kwargs)
+end
+
+--- This operator converts a CSR matrix whose values are edge Ids
+--- to an adjacency matrix whose values are ones. The output CSR matrix always has
+--- the data value of float32.
+--- 
+--- ### Example
+--- 
+---    .. code:: python
+--- 
+---   x = [[ 1, 0, 0 ],
+---        [ 0, 2, 0 ],
+---        [ 0, 0, 3 ]]
+---   dgl_adjacency(x) =
+---       [[ 1, 0, 0 ],
+---        [ 0, 1, 0 ],
+---        [ 0, 0, 1 ]]
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\dgl_graph.cc:L1393
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input ndarray
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.dgl_adjacency(data, name, attr, out, kwargs)
+end
+
+--- This operator samples sub-graph from a csr graph via an
+--- non-uniform probability. The operator is designed for DGL.
+--- 
+--- The operator outputs four sets of NDArrays to represent the sampled results
+--- (the number of NDArrays in each set is the same as the number of seed NDArrays):
+--- 1) a set of 1D NDArrays containing the sampled vertices, 2) a set of CSRNDArrays representing
+--- the sampled edges, 3) a set of 1D NDArrays with the probability that vertices are sampled,
+--- 4) a set of 1D NDArrays indicating the layer where a vertex is sampled.
+--- The first set of 1D NDArrays have a length of max_num_vertices+1. The last element in an NDArray
+--- indicate the acutal number of vertices in a subgraph. The third and fourth set of NDArrays have a length
+--- of max_num_vertices, and the valid number of vertices is the same as the ones in the first set.
+--- 
+--- ### Example
+--- 
+---    .. code:: python
+--- 
+---   shape = (5, 5)
+---   prob = mx.nd.array([0.9, 0.8, 0.2, 0.4, 0.1], dtype=np.float32)
+---   data_np = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], dtype=np.int64)
+---   indices_np = np.array([1,2,3,4,0,2,3,4,0,1,3,4,0,1,2,4,0,1,2,3], dtype=np.int64)
+---   indptr_np = np.array([0,4,8,12,16,20], dtype=np.int64)
+---   a = mx.nd.sparse.csr_matrix((data_np, indices_np, indptr_np), shape=shape)
+---   seed = mx.nd.array([0,1,2,3,4], dtype=np.int64)
+---   out = mx.nd.contrib.dgl_csr_neighbor_non_uniform_sample(a, prob, seed, num_args=3, num_hops=1, num_neighbor=2, max_num_vertices=5)
+--- 
+---   out[0]
+---   [0 1 2 3 4 5]
+---   <NDArray 6 @cpu(0)>
+--- 
+---   out[1].asnumpy()
+---   array([[ 0,  1,  2,  0,  0],
+---          [ 5,  0,  6,  0,  0],
+---          [ 9, 10,  0,  0,  0],
+---          [13, 14,  0,  0,  0],
+---          [ 0, 18, 19,  0,  0]])
+--- 
+---   out[2]
+---   [0.9 0.8 0.2 0.4 0.1]
+---   <NDArray 5 @cpu(0)>
+--- 
+---   out[3]
+---   [0 0 0 0 0]
+---   <NDArray 5 @cpu(0)>
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\dgl_graph.cc:L883
+--- This function support variable length of positional input.
+---
+---
+---@param csr_matrix any @Symbol | csr matrix
+---@param probability any @Symbol | probability vector
+---@param seed_arrays any @Symbol[] | seed vertices
+---@param num_hops any @, optional, default=1 | Number of hops.
+---@param num_neighbor any @, optional, default=2 | Number of neighbor.
+---@param max_num_vertices any @, optional, default=100 | Max number of vertices.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.dgl_csr_neighbor_non_uniform_sample(...)
+end
+
+--- This operator samples sub-graphs from a csr graph via an
+--- uniform probability. The operator is designed for DGL.
+--- 
+--- The operator outputs three sets of NDArrays to represent the sampled results
+--- (the number of NDArrays in each set is the same as the number of seed NDArrays):
+--- 1) a set of 1D NDArrays containing the sampled vertices, 2) a set of CSRNDArrays representing
+--- the sampled edges, 3) a set of 1D NDArrays indicating the layer where a vertex is sampled.
+--- The first set of 1D NDArrays have a length of max_num_vertices+1. The last element in an NDArray
+--- indicate the acutal number of vertices in a subgraph. The third set of NDArrays have a length
+--- of max_num_vertices, and the valid number of vertices is the same as the ones in the first set.
+--- 
+--- ### Example
+--- 
+---    .. code:: python
+--- 
+---   shape = (5, 5)
+---   data_np = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], dtype=np.int64)
+---   indices_np = np.array([1,2,3,4,0,2,3,4,0,1,3,4,0,1,2,4,0,1,2,3], dtype=np.int64)
+---   indptr_np = np.array([0,4,8,12,16,20], dtype=np.int64)
+---   a = mx.nd.sparse.csr_matrix((data_np, indices_np, indptr_np), shape=shape)
+---   a.asnumpy()
+---   seed = mx.nd.array([0,1,2,3,4], dtype=np.int64)
+---   out = mx.nd.contrib.dgl_csr_neighbor_uniform_sample(a, seed, num_args=2, num_hops=1, num_neighbor=2, max_num_vertices=5)
+--- 
+---   out[0]
+---   [0 1 2 3 4 5]
+---   <NDArray 6 @cpu(0)>
+--- 
+---   out[1].asnumpy()
+---   array([[ 0,  1,  0,  3,  0],
+---          [ 5,  0,  0,  7,  0],
+---          [ 9,  0,  0, 11,  0],
+---          [13,  0, 15,  0,  0],
+---          [17,  0, 19,  0,  0]])
+--- 
+---   out[2]
+---   [0 0 0 0 0]
+---   <NDArray 5 @cpu(0)>
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\dgl_graph.cc:L784
+--- This function support variable length of positional input.
+---
+---
+---@param csr_matrix any @Symbol | csr matrix
+---@param seed_arrays any @Symbol[] | seed vertices
+---@param num_hops any @, optional, default=1 | Number of hops.
+---@param num_neighbor any @, optional, default=2 | Number of neighbor.
+---@param max_num_vertices any @, optional, default=100 | Max number of vertices.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.dgl_csr_neighbor_uniform_sample(...)
+end
+
+--- This operator compacts a CSR matrix generated by
+--- dgl_csr_neighbor_uniform_sample and dgl_csr_neighbor_non_uniform_sample.
+--- The CSR matrices generated by these two operators may have many empty
+--- rows at the end and many empty columns. This operator removes these
+--- empty rows and empty columns.
+--- 
+--- ### Example
+--- 
+---    .. code:: python
+--- 
+---   shape = (5, 5)
+---   data_np = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20], dtype=np.int64)
+---   indices_np = np.array([1,2,3,4,0,2,3,4,0,1,3,4,0,1,2,4,0,1,2,3], dtype=np.int64)
+---   indptr_np = np.array([0,4,8,12,16,20], dtype=np.int64)
+---   a = mx.nd.sparse.csr_matrix((data_np, indices_np, indptr_np), shape=shape)
+---   seed = mx.nd.array([0,1,2,3,4], dtype=np.int64)
+---   out = mx.nd.contrib.dgl_csr_neighbor_uniform_sample(a, seed, num_args=2, num_hops=1,
+---           num_neighbor=2, max_num_vertices=6)
+---   subg_v = out[0]
+---   subg = out[1]
+---   compact = mx.nd.contrib.dgl_graph_compact(subg, subg_v,
+---           graph_sizes=(subg_v[-1].asnumpy()[0]), return_mapping=False)
+--- 
+---   compact.asnumpy()
+---   array([[0, 0, 0, 1, 0],
+---          [2, 0, 3, 0, 0],
+---          [0, 4, 0, 0, 5],
+---          [0, 6, 0, 0, 7],
+---          [8, 9, 0, 0, 0]])
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\dgl_graph.cc:L1582
+--- This function support variable length of positional input.
+---
+---
+---@param graph_data any @Symbol[] | Input graphs and input vertex Ids.
+---@param return_mapping any @boolean, required | Return mapping of vid and eid between the subgraph and the parent graph.
+---@param graph_sizes any @, required | the number of vertices in each graph.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.dgl_graph_compact(...)
+end
+
+--- This operator constructs an induced subgraph for
+--- a given set of vertices from a graph. The operator accepts multiple
+--- sets of vertices as input. For each set of vertices, it returns a pair
+--- of CSR matrices if return_mapping is True: the first matrix contains edges
+--- with new edge Ids, the second matrix contains edges with the original
+--- edge Ids.
+--- 
+--- ### Example
+--- 
+---    .. code:: python
+--- 
+---      x=[[1, 0, 0, 2],
+---        [3, 0, 4, 0],
+---        [0, 5, 0, 0],
+---        [0, 6, 7, 0]]
+---      v = [0, 1, 2]
+---      dgl_subgraph(x, v, return_mapping=True) =
+---        [[1, 0, 0],
+---         [2, 0, 3],
+---         [0, 4, 0]],
+---        [[1, 0, 0],
+---         [3, 0, 4],
+---         [0, 5, 0]]
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\dgl_graph.cc:L1140
+--- This function support variable length of positional input.
+---
+---
+---@param graph any @Symbol | Input graph where we sample vertices.
+---@param data any @Symbol[] | The input arrays that include data arrays and states.
+---@param return_mapping any @boolean, required | Return mapping of vid and eid between the subgraph and the parent graph.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.dgl_subgraph(...)
+end
+
+--- Rescale the input by the square root of the channel dimension.
+--- 
+---    out = data / sqrt(data.shape[-1])
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\transformer.cc:L38
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | The input array.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.div_sqrt_dim(data, name, attr, out, kwargs)
+end
+
+--- This operator implements the edge_id function for a graph
+--- stored in a CSR matrix (the value of the CSR stores the edge Id of the graph).
+--- output[i] = input[u[i], v[i]] if there is an edge between u[i] and v[i]],
+--- otherwise output[i] will be -1. Both u and v should be 1D vectors.
+--- 
+--- ### Example
+--- 
+---    .. code:: python
+--- 
+---       x = [[ 1, 0, 0 ],
+---            [ 0, 2, 0 ],
+---            [ 0, 0, 3 ]]
+---       u = [ 0, 0, 1, 1, 2, 2 ]
+---       v = [ 0, 1, 1, 2, 0, 2 ]
+---       edge_id(x, u, v) = [ 1, -1, 2, -1, -1, 3 ]
+--- 
+--- The storage type of ``edge_id`` output depends on storage types of inputs
+---   - edge_id(csr, default, default) = default
+---   - default and rsp inputs are not supported
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\dgl_graph.cc:L1321
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input ndarray
+---@param u any @Symbol | u ndarray
+---@param v any @Symbol | v ndarray
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.edge_id(data, u, v, name, attr, out, kwargs)
+end
+
+--- Apply 1D FFT to input"
+--- 
+--- ### Note: `fft` is only available on GPU.
+--- 
+--- Currently accept 2 input data shapes: (N, d) or (N1, N2, N3, d), data can only be real numbers.
+--- The output data has shape: (N, 2*d) or (N1, N2, N3, 2*d). The format is: [real0, imag0, real1, imag1, ...].
+--- 
+--- ### Example
+--- 
+---    data = np.random.normal(0,1,(3,4))
+---    out = mx.contrib.ndarray.fft(data = mx.nd.array(data,ctx = mx.gpu(0)))
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\fft.cc:L56
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data to the FFTOp.
+---@param compute_size any @int, optional, default='128' | Maximum size of sub-batch to be forwarded at one time
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.fft(data, compute_size, name, attr, out, kwargs)
+end
+
+--- Number of stored values for a sparse tensor, including explicit zeros.
+--- 
+--- This operator only supports CSR matrix on CPU.
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\nnz.cc:L177
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input
+---@param axis any @int or None, optional, default='None' | Select between the number of values across the whole matrix, in each column, or in each row.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.getnnz(data, axis, name, attr, out, kwargs)
+end
+
+--- This operator implements the gradient multiplier function.
+--- In forward pass it acts as an identity transform. During backpropagation it
+--- multiplies the gradient from the subsequent level by a scalar factor lambda and passes it to
+--- the preceding layer.
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\gradient_multiplier_op.cc:L78
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | The input array.
+---@param scalar any @float | lambda multiplier
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.gradientmultiplier(data, scalar, name, attr, out, kwargs)
+end
+
+--- Update function for Group AdaGrad optimizer.
+--- 
+--- Referenced from *Adaptive Subgradient Methods for Online Learning and Stochastic Optimization*,
+--- and available at http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf but
+--- uses only a single learning rate for every row of the parameter array.
+--- 
+--- Updates are applied by::
+--- 
+---     grad = clip(grad * rescale_grad, clip_gradient)
+---     history += mean(square(grad), axis=1, keepdims=True)
+---     div = grad / sqrt(history + float_stable_eps)
+---     weight -= div * lr
+--- 
+--- Weights are updated lazily if the gradient is sparse.
+--- 
+--- Note that non-zero values for the weight decay option are not supported.
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\optimizer_op.cc:L71
+--- This function support variable length of positional input.
+---
+---
+---@param weight any @Symbol | Weight
+---@param grad any @Symbol | Gradient
+---@param history any @Symbol | History
+---@param lr any @float, required | Learning rate
+---@param rescale_grad any @float, optional, default=1 | Rescale gradient to grad = rescale_grad*grad.
+---@param clip_gradient any @float, optional, default=-1 | Clip gradient to the range of [-clip_gradient, clip_gradient] If clip_gradient <= 0, gradient clipping is turned off. grad = max(min(grad, clip_gradient), -clip_gradient).
+---@param epsilon any @float, optional, default=9.99999975e-06 | Epsilon for numerical stability
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.group_adagrad_update(weight, grad, history, lr, rescale_grad, clip_gradient, epsilon, name, attr, out, kwargs)
+end
+
+--- Computes the log likelihood of a univariate Hawkes process.
+--- 
+--- The log likelihood is calculated on point process observations represented
+--- as *ragged* matrices for *lags* (interarrival times w.r.t. the previous point),
+--- and *marks* (identifiers for the process ID). Note that each mark is considered independent,
+--- i.e., computes the joint likelihood of a set of Hawkes processes determined by the conditional intensity:
+--- 
+--- .. math::
+--- 
+---   \lambda_k^*(t) = \lambda_k + \alpha_k \sum_{\{t_i < t, y_i = k\}} \beta_k \exp(-\beta_k (t - t_i))
+--- 
+--- where :math:`\lambda_k` specifies the background intensity ``lda``, :math:`\alpha_k` specifies the *branching ratio* or ``alpha``, and :math:`\beta_k` the delay density parameter ``beta``.
+--- 
+--- ``lags`` and ``marks`` are two NDArrays of shape (N, T) and correspond to the representation of the point process observation, the first dimension corresponds to the batch index, and the second to the sequence. These are "left-aligned" *ragged* matrices (the first index of the second dimension is the beginning of every sequence. The length of each sequence is given by ``valid_length``, of shape (N,) where ``valid_length[i]`` corresponds to the number of valid points in ``lags[i, :]`` and ``marks[i, :]``.
+--- 
+--- ``max_time`` is the length of the observation period of the point process. That is, specifying ``max_time[i] = 5`` computes the likelihood of the i-th sample as observed on the time interval :math:`(0, 5]`. Naturally, the sum of all valid ``lags[i, :valid_length[i]]`` must be less than or equal to 5.
+--- 
+--- The input ``state`` specifies the *memory* of the Hawkes process. Invoking the memoryless property of exponential decays, we compute the *memory* as
+--- 
+--- .. math::
+--- 
+---     s_k(t) = \sum_{t_i < t} \exp(-\beta_k (t - t_i)).
+--- 
+--- The ``state`` to be provided is :math:`s_k(0)` and carries the added intensity due to past events before the current batch. :math:`s_k(T)` is returned from the function where :math:`T` is ``max_time[T]``.
+--- 
+--- ### Example
+--- 
+---   -- define the Hawkes process parameters
+---   lda = nd.array([1.5, 2.0, 3.0]).tile((N, 1))
+---   alpha = nd.array([0.2, 0.3, 0.4])  # branching ratios should be < 1
+---   beta = nd.array([1.0, 2.0, 3.0])
+--- 
+---   -- the "data", or observations
+---   ia_times = nd.array([[6, 7, 8, 9], [1, 2, 3, 4], [3, 4, 5, 6], [8, 9, 10, 11]])
+---   marks = nd.zeros((N, T)).astype(np.int32)
+--- 
+---   -- starting "state" of the process
+---   states = nd.zeros((N, K))
+--- 
+---   valid_length = nd.array([1, 2, 3, 4])  # number of valid points in each sequence
+---   max_time = nd.ones((N,)) * 100.0  # length of the observation period
+--- 
+---   A = nd.contrib.hawkesll(
+---       lda, alpha, beta, states, ia_times, marks, valid_length, max_time
+---   )
+--- 
+--- ### References
+--- 
+--- -  Bacry, E., Mastromatteo, I., & Muzy, J. F. (2015).
+---    Hawkes processes in finance. Market Microstructure and Liquidity
+---    , 1(01), 1550005.
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\hawkes_ll.cc:L84
+--- This function support variable length of positional input.
+---
+---
+---@param lda any @Symbol | Shape (N, K) The intensity for each of the K processes, for each sample
+---@param alpha any @Symbol | Shape (K,) The infectivity factor (branching ratio) for each process
+---@param beta any @Symbol | Shape (K,) The decay parameter for each process
+---@param state any @Symbol | Shape (N, K) the Hawkes state for each process
+---@param lags any @Symbol | Shape (N, T) the interarrival times
+---@param marks any @Symbol | Shape (N, T) the marks (process ids)
+---@param valid_length any @Symbol | The number of valid points in the process
+---@param max_time any @Symbol | the length of the interval where the processes were sampled
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.hawkesll(lda, alpha, beta, state, lags, marks, valid_length, max_time, name, attr, out, kwargs)
+end
+
+--- Apply 1D ifft to input"
+--- 
+--- ### Note: `ifft` is only available on GPU.
+--- 
+--- Currently accept 2 input data shapes: (N, d) or (N1, N2, N3, d). Data is in format: [real0, imag0, real1, imag1, ...].
+--- Last dimension must be an even number.
+--- The output data has shape: (N, d/2) or (N1, N2, N3, d/2). It is only the real part of the result.
+--- 
+--- ### Example
+--- 
+---    data = np.random.normal(0,1,(3,4))
+---    out = mx.contrib.ndarray.ifft(data = mx.nd.array(data,ctx = mx.gpu(0)))
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\ifft.cc:L58
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data to the IFFTOp.
+---@param compute_size any @int, optional, default='128' | Maximum size of sub-batch to be forwarded at one time
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.ifft(data, compute_size, name, attr, out, kwargs)
+end
+
+--- Returns an array of indexes of the input array.
+--- 
+--- For an input array with shape  :math:`(d_1, d_2, ..., d_n)`, `index_array` returns a
+--- :math:`(d_1, d_2, ..., d_n, n)` array `idx`, where
+--- :math:`idx[i_1, i_2, ..., i_n, :] = [i_1, i_2, ..., i_n]`.
+--- 
+--- Additionally, when the parameter `axes` is specified, `idx` will be a
+--- :math:`(d_1, d_2, ..., d_n, m)` array where `m` is the length of `axes`, and the following
+--- equality will hold: :math:`idx[i_1, i_2, ..., i_n, j] = i_{axes[j]}`.
+--- 
+--- ### Examples
+--- 
+---     x = mx.nd.ones((3, 2))
+--- 
+---     mx.nd.contrib.index_array(x) = [[[0 0]
+---                                      [0 1]]
+--- 
+---                                     [[1 0]
+---                                      [1 1]]
+--- 
+---                                     [[2 0]
+---                                      [2 1]]]
+--- 
+---     x = mx.nd.ones((3, 2, 2))
+--- 
+---     mx.nd.contrib.index_array(x, axes=(1, 0)) = [[[[0 0]
+---                                                    [0 0]]
+--- 
+---                                                   [[1 0]
+---                                                    [1 0]]]
+--- 
+--- 
+---                                                  [[[0 1]
+---                                                    [0 1]]
+--- 
+---                                                   [[1 1]
+---                                                    [1 1]]]
+--- 
+--- 
+---                                                  [[[0 2]
+---                                                    [0 2]]
+--- 
+---                                                   [[1 2]
+---                                                    [1 2]]]]
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\index_array.cc:L118
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data
+---@param axes any @Shape or None, optional, default=None | The axes to include in the index array. Supports negative values.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.index_array(data, axes, name, attr, out, kwargs)
+end
+
+--- Copies the elements of a `new_tensor` into the `old_tensor`.
+--- 
+--- This operator copies the elements by selecting the indices in the order given in `index`.
+--- The output will be a new tensor containing the rest elements of old tensor and
+--- the copied elements of new tensor.
+--- For example, if `index[i] == j`, then the `i` th row of `new_tensor` is copied to the
+--- `j` th row of output.
+--- 
+--- The `index` must be a vector and it must have the same size with the `0` th dimension of
+--- `new_tensor`. Also, the `0` th dimension of old_tensor must `>=` the `0` th dimension of
+--- `new_tensor`, or an error will be raised.
+--- 
+--- ### Examples
+--- 
+---     x = mx.nd.zeros((5,3))
+---     t = mx.nd.array([[1,2,3],[4,5,6],[7,8,9]])
+---     index = mx.nd.array([0,4,2])
+--- 
+---     mx.nd.contrib.index_copy(x, index, t)
+--- 
+---     [[1. 2. 3.]
+---      [0. 0. 0.]
+---      [7. 8. 9.]
+---      [0. 0. 0.]
+---      [4. 5. 6.]]
+---     <NDArray 5x3 @cpu(0)>
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\index_copy.cc:L183
+--- This function support variable length of positional input.
+---
+---
+---@param old_tensor any @Symbol | Old tensor
+---@param index_vector any @Symbol | Index vector
+---@param new_tensor any @Symbol | New tensor to be copied
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.index_copy(old_tensor, index_vector, new_tensor, name, attr, out, kwargs)
+end
+
+--- This operators implements the quadratic function.
+--- 
+--- .. math::
+---     f(x) = ax^2+bx+c
+--- 
+--- where :math:`x` is an input tensor and all operations
+--- in the function are element-wise.
+--- 
+--- ### Example
+--- 
+---   x = [[1, 2], [3, 4]]
+---   y = quadratic(data=x, a=1, b=2, c=3)
+---   y = [[6, 11], [18, 27]]
+--- 
+--- The storage type of ``quadratic`` output depends on storage types of inputs
+---   - quadratic(csr, a, b, 0) = csr
+---   - quadratic(default, a, b, c) = default
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\contrib\quadratic_op.cc:L50
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input ndarray
+---@param a any @float, optional, default=0 | Coefficient of the quadratic term in the quadratic function.
+---@param b any @float, optional, default=0 | Coefficient of the linear term in the quadratic function.
+---@param c any @float, optional, default=0 | Constant term in the quadratic function.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.quadratic(data, a, b, c, name, attr, out, kwargs)
+end
+
+--- Quantize a input tensor from float to `out_type`,
+--- with user-specified `min_range` and `max_range`.
+--- 
+--- min_range and max_range are scalar floats that specify the range for
+--- the input data.
+--- 
+--- When out_type is `uint8`, the output is calculated using the following equation:
+--- 
+--- `out[i] = (in[i] - min_range) * range(OUTPUT_TYPE) / (max_range - min_range) + 0.5`,
+--- 
+--- where `range(T) = numeric_limits<T>::max() - numeric_limits<T>::min()`.
+--- 
+--- When out_type is `int8`, the output is calculate using the following equation
+--- by keep zero centered for the quantized value:
+--- 
+--- `out[i] = sign(in[i]) * min(abs(in[i] * scale + 0.5f, quantized_range)`,
+--- 
+--- where
+--- `quantized_range = MinAbs(max(int8), min(int8))` and
+--- `scale = quantized_range / MaxAbs(min_range, max_range).`
+--- 
+--- .. Note::
+---     This operator only supports forward propagation. DO NOT use it in training.
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\quantization\quantize.cc:L74
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | A ndarray/symbol of type `float32`
+---@param min_range any @Symbol | The minimum scalar value possibly produced for the input
+---@param max_range any @Symbol | The maximum scalar value possibly produced for the input
+---@param out_type any @{'int8', 'uint8'},optional, default='uint8' | Output data type.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.quantize(data, min_range, max_range, out_type, name, attr, out, kwargs)
+end
+
+--- Quantize a input tensor from float to `out_type`,
+--- with user-specified `min_calib_range` and `max_calib_range` or the input range collected at runtime.
+--- 
+--- Output `min_range` and `max_range` are scalar floats that specify the range for the input data.
+--- 
+--- When out_type is `uint8`, the output is calculated using the following equation:
+--- 
+--- `out[i] = (in[i] - min_range) * range(OUTPUT_TYPE) / (max_range - min_range) + 0.5`,
+--- 
+--- where `range(T) = numeric_limits<T>::max() - numeric_limits<T>::min()`.
+--- 
+--- When out_type is `int8`, the output is calculate using the following equation
+--- by keep zero centered for the quantized value:
+--- 
+--- `out[i] = sign(in[i]) * min(abs(in[i] * scale + 0.5f, quantized_range)`,
+--- 
+--- where
+--- `quantized_range = MinAbs(max(int8), min(int8))` and
+--- `scale = quantized_range / MaxAbs(min_range, max_range).`
+--- 
+--- When out_type is `auto`, the output type is automatically determined by min_calib_range if presented.
+--- If min_calib_range < 0.0f, the output type will be int8, otherwise will be uint8.
+--- If min_calib_range isn't presented, the output type will be int8.
+--- 
+--- .. Note::
+---     This operator only supports forward propagation. DO NOT use it in training.
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\quantization\quantize_v2.cc:L92
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | A ndarray/symbol of type `float32`
+---@param out_type any @{'auto', 'int8', 'uint8'},optional, default='int8' | Output data type. `auto` can be specified to automatically determine output type according to min_calib_range.
+---@param min_calib_range any @float or None, optional, default=None | The minimum scalar value in the form of float32. If present, it will be used to quantize the fp32 data into int8 or uint8.
+---@param max_calib_range any @float or None, optional, default=None | The maximum scalar value in the form of float32. If present, it will be used to quantize the fp32 data into int8 or uint8.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.quantize_v2(data, out_type, min_calib_range, max_calib_range, name, attr, out, kwargs)
+end
+
+--- Activation operator for input and output data type of int8.
+--- The input and output data comes with min and max thresholds for quantizing
+--- the float32 data into int8.
+--- 
+--- .. Note::
+---      This operator only supports forward propogation. DO NOT use it in training.
+---      This operator only supports `relu`
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\quantization\quantized_activation.cc:L91
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data.
+---@param min_data any @Symbol | Minimum value of data.
+---@param max_data any @Symbol | Maximum value of data.
+---@param act_type any @{'relu', 'sigmoid', 'softrelu', 'softsign', 'tanh'}, required | Activation function to be applied.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.quantized_act(data, min_data, max_data, act_type, name, attr, out, kwargs)
+end
+
+--- Joins input arrays along a given axis.
+--- 
+--- The dimensions of the input arrays should be the same except the axis along
+--- which they will be concatenated.
+--- The dimension of the output array along the concatenated axis will be equal
+--- to the sum of the corresponding dimensions of the input arrays.
+--- All inputs with different min/max will be rescaled by using largest [min, max] pairs.
+--- If any input holds int8, then the output will be int8. Otherwise output will be uint8.
+--- 
+--- 
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\quantization\quantized_concat.cc:L108
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol[] | List of arrays to concatenate
+---@param dim any @int, optional, default='1' | the dimension to be concated.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.quantized_concat(...)
+end
+
+--- Convolution operator for input, weight and bias data type of int8,
+--- and accumulates in type int32 for the output. For each argument, two more arguments of type
+--- float32 must be provided representing the thresholds of quantizing argument from data
+--- type float32 to int8. The final outputs contain the convolution result in int32, and min
+--- and max thresholds representing the threholds for quantizing the float32 output into int32.
+--- 
+--- .. Note::
+---     This operator only supports forward propogation. DO NOT use it in training.
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\quantization\quantized_conv.cc:L137
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data.
+---@param weight any @Symbol | weight.
+---@param bias any @Symbol | bias.
+---@param min_data any @Symbol | Minimum value of data.
+---@param max_data any @Symbol | Maximum value of data.
+---@param min_weight any @Symbol | Minimum value of weight.
+---@param max_weight any @Symbol | Maximum value of weight.
+---@param min_bias any @Symbol | Minimum value of bias.
+---@param max_bias any @Symbol | Maximum value of bias.
+---@param kernel any @Shape(tuple), required | Convolution kernel size: (w,), (h, w) or (d, h, w)
+---@param stride any @Shape(tuple), optional, default=[] | Convolution stride: (w,), (h, w) or (d, h, w). Defaults to 1 for each dimension.
+---@param dilate any @Shape(tuple), optional, default=[] | Convolution dilate: (w,), (h, w) or (d, h, w). Defaults to 1 for each dimension.
+---@param pad any @Shape(tuple), optional, default=[] | Zero pad for convolution: (w,), (h, w) or (d, h, w). Defaults to no padding.
+---@param num_filter any @int (non-negative), required | Convolution filter(channel) number
+---@param num_group any @int (non-negative), optional, default=1 | Number of group partitions.
+---@param workspace any @long (non-negative), optional, default=1024 | Maximum temporary workspace allowed (MB) in convolution.This parameter has two usages. When CUDNN is not used, it determines the effective batch size of the convolution kernel. When CUDNN is used, it controls the maximum temporary storage used for tuning the best CUDNN kernel when `limited_workspace` strategy is used.
+---@param no_bias any @boolean, optional, default=0 | Whether to disable bias parameter.
+---@param cudnn_tune any @{None, 'fastest', 'limited_workspace', 'off'},optional, default='None' | Whether to pick convolution algo by running performance test.
+---@param cudnn_off any @boolean, optional, default=0 | Turn off cudnn for this layer.
+---@param layout any @{None, 'NCDHW', 'NCHW', 'NCW', 'NDHWC', 'NHWC'},optional, default='None' | Set layout for input, output and weight. Empty for    default layout: NCW for 1d, NCHW for 2d and NCDHW for 3d.NHWC and NDHWC are only supported on GPU.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.quantized_conv(data, weight, bias, min_data, max_data, min_weight, max_weight, min_bias, max_bias, kernel, stride, dilate, pad, num_filter, num_group, workspace, no_bias, cudnn_tune, cudnn_off, layout, name, attr, out, kwargs)
+end
+
+--- elemwise_add operator for input dataA and input dataB data type of int8,
+--- and accumulates in type int32 for the output. For each argument, two more arguments of type
+--- float32 must be provided representing the thresholds of quantizing argument from data
+--- type float32 to int8. The final outputs contain result in int32, and min
+--- and max thresholds representing the threholds for quantizing the float32 output into int32.
+--- 
+--- .. Note::
+---     This operator only supports forward propogation. DO NOT use it in training.
+--- 
+--- 
+--- This function support variable length of positional input.
+---
+---
+---@param min_calib_range any @float or None, optional, default=None | The minimum scalar value in the form of float32 obtained through calibration. If present, it will be used to requantize the int8 output data.
+---@param max_calib_range any @float or None, optional, default=None | The maximum scalar value in the form of float32 obtained through calibration. If present, it will be used to requantize the int8 output data.
+---@param lhs any @Symbol | first input
+---@param rhs any @Symbol | second input
+---@param lhs_min any @Symbol | 3rd input
+---@param lhs_max any @Symbol | 4th input
+---@param rhs_min any @Symbol | 5th input
+---@param rhs_max any @Symbol | 6th input
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.quantized_elemwise_add(lhs, rhs, lhs_min, lhs_max, rhs_min, rhs_max, min_calib_range, max_calib_range, name, attr, out, kwargs)
+end
+
+--- 
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | A ndarray/symbol of type `float32`
+---@param min_data any @Symbol | The minimum scalar value possibly produced for the data
+---@param max_data any @Symbol | The maximum scalar value possibly produced for the data
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.quantized_flatten(data, min_data, max_data, name, attr, out, kwargs)
+end
+
+--- Fully Connected operator for input, weight and bias data type of int8,
+--- and accumulates in type int32 for the output. For each argument, two more arguments of type
+--- float32 must be provided representing the thresholds of quantizing argument from data
+--- type float32 to int8. The final outputs contain the convolution result in int32, and min
+--- and max thresholds representing the threholds for quantizing the float32 output into int32.
+--- 
+--- .. Note::
+---     This operator only supports forward propogation. DO NOT use it in training.
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\quantization\quantized_fully_connected.cc:L313
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data.
+---@param weight any @Symbol | weight.
+---@param bias any @Symbol | bias.
+---@param min_data any @Symbol | Minimum value of data.
+---@param max_data any @Symbol | Maximum value of data.
+---@param min_weight any @Symbol | Minimum value of weight.
+---@param max_weight any @Symbol | Maximum value of weight.
+---@param min_bias any @Symbol | Minimum value of bias.
+---@param max_bias any @Symbol | Maximum value of bias.
+---@param num_hidden any @int, required | Number of hidden nodes of the output.
+---@param no_bias any @boolean, optional, default=0 | Whether to disable bias parameter.
+---@param flatten any @boolean, optional, default=1 | Whether to collapse all but the first axis of the input data tensor.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.quantized_fully_connected(data, weight, bias, min_data, max_data, min_weight, max_weight, min_bias, max_bias, num_hidden, no_bias, flatten, name, attr, out, kwargs)
+end
+
+--- Pooling operator for input and output data type of int8.
+--- The input and output data comes with min and max thresholds for quantizing
+--- the float32 data into int8.
+--- 
+--- .. Note::
+---     This operator only supports forward propogation. DO NOT use it in training.
+---     This operator only supports `pool_type` of `avg` or `max`.
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\quantization\quantized_pooling.cc:L145
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | Input data.
+---@param min_data any @Symbol | Minimum value of data.
+---@param max_data any @Symbol | Maximum value of data.
+---@param kernel any @Shape(tuple), optional, default=[] | Pooling kernel size: (y, x) or (d, y, x)
+---@param pool_type any @{'avg', 'lp', 'max', 'sum'},optional, default='max' | Pooling type to be applied.
+---@param global_pool any @boolean, optional, default=0 | Ignore kernel size, do global pooling based on current input feature map. 
+---@param cudnn_off any @boolean, optional, default=0 | Turn off cudnn pooling and use MXNet pooling operator. 
+---@param pooling_convention any @{'full', 'same', 'valid'},optional, default='valid' | Pooling convention to be applied.
+---@param stride any @Shape(tuple), optional, default=[] | Stride: for pooling (y, x) or (d, y, x). Defaults to 1 for each dimension.
+---@param pad any @Shape(tuple), optional, default=[] | Pad for pooling: (y, x) or (d, y, x). Defaults to no padding.
+---@param p_value any @int or None, optional, default='None' | Value of p for Lp pooling, can be 1 or 2, required for Lp Pooling.
+---@param count_include_pad any @boolean or None, optional, default=None | Only used for AvgPool, specify whether to count padding elements for averagecalculation. For example, with a 5*5 kernel on a 3*3 corner of a image,the sum of the 9 valid elements will be divided by 25 if this is set to true,or it will be divided by 9 if this is set to false. Defaults to true.
+---@param layout any @{None, 'NCDHW', 'NCHW', 'NCW', 'NDHWC', 'NHWC', 'NWC'},optional, default='None' | Set layout for input and output. Empty for    default layout: NCW for 1d, NCHW for 2d and NCDHW for 3d.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.quantized_pooling(data, min_data, max_data, kernel, pool_type, global_pool, cudnn_off, pooling_convention, stride, pad, p_value, count_include_pad, layout, name, attr, out, kwargs)
+end
+
+--- Given data that is quantized in int32 and the corresponding thresholds,
+--- requantize the data into int8 using min and max thresholds either calculated at runtime
+--- or from calibration. It's highly recommended to pre-calucate the min and max thresholds
+--- through calibration since it is able to save the runtime of the operator and improve the
+--- inference accuracy.
+--- 
+--- .. Note::
+---     This operator only supports forward propogation. DO NOT use it in training.
+--- 
+--- ### Defined in C:\Jenkins\workspace\mxnet-tag\mxnet\src\operator\quantization\requantize.cc:L60
+--- This function support variable length of positional input.
+---
+---
+---@param data any @Symbol | A ndarray/symbol of type `int32`
+---@param min_range any @Symbol | The original minimum scalar value in the form of float32 used for quantizing data into int32.
+---@param max_range any @Symbol | The original maximum scalar value in the form of float32 used for quantizing data into int32.
+---@param out_type any @{'auto', 'int8', 'uint8'},optional, default='int8' | Output data type. `auto` can be specified to automatically determine output type according to min_calib_range.
+---@param min_calib_range any @float or None, optional, default=None | The minimum scalar value in the form of float32 obtained through calibration. If present, it will be used to requantize the int32 data into int8.
+---@param max_calib_range any @float or None, optional, default=None | The maximum scalar value in the form of float32 obtained through calibration. If present, it will be used to requantize the int32 data into int8.
+---@param name string @optional | Name of the resulting symbol.
+---@return mx.symbol.Symbol @The result symbol.
+function M.requantize(data, min_range, max_range, out_type, min_calib_range, max_calib_range, name, attr, out, kwargs)
+end
+
+
+return M
