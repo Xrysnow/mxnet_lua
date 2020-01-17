@@ -62,7 +62,7 @@ function FactorScheduler:ctor(step, factor, stop_factor_lr, base_lr,
     warmup_steps = warmup_steps or 0
     warmup_begin_lr = warmup_begin_lr or 0
     warmup_mode = warmup_mode or 'linear'
-    self.super.ctor(self, base_lr, warmup_steps, warmup_begin_lr, warmup_mode)
+    LRScheduler.ctor(self, base_lr, warmup_steps, warmup_begin_lr, warmup_mode)
     if step < 1 then
         error('Schedule step must be greater or equal than 1 round')
     end
@@ -106,7 +106,7 @@ function MultiFactorScheduler:ctor(step, factor, base_lr,
     warmup_steps = warmup_steps or 0
     warmup_begin_lr = warmup_begin_lr or 0
     warmup_mode = warmup_mode or 'linear'
-    self.super.ctor(self, base_lr, warmup_steps, warmup_begin_lr, warmup_mode)
+    LRScheduler.ctor(self, base_lr, warmup_steps, warmup_begin_lr, warmup_mode)
     assert(#step >= 1)
     for i, _step in ipairs(step) do
         if i ~= 1 and step[i] <= step[i - 1] then
@@ -155,7 +155,7 @@ function PolyScheduler:ctor(max_update, base_lr, pwr, final_lr,
     warmup_steps = warmup_steps or 0
     warmup_begin_lr = warmup_begin_lr or 0
     warmup_mode = warmup_mode or 'linear'
-    self.super.ctor(self, base_lr, warmup_steps, warmup_begin_lr, warmup_mode)
+    LRScheduler.ctor(self, base_lr, warmup_steps, warmup_begin_lr, warmup_mode)
     if max_update < 1 then
         error('maximum number of updates must be strictly positive')
     end
@@ -188,7 +188,7 @@ function CosineScheduler:ctor(max_update, base_lr, final_lr,
     warmup_steps = warmup_steps or 0
     warmup_begin_lr = warmup_begin_lr or 0
     warmup_mode = warmup_mode or 'linear'
-    self.super.ctor(self, base_lr, warmup_steps, warmup_begin_lr, warmup_mode)
+    LRScheduler.ctor(self, base_lr, warmup_steps, warmup_begin_lr, warmup_mode)
     if max_update < 1 then
         error('maximum number of updates must be strictly positive')
     end

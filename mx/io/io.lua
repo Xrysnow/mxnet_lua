@@ -14,13 +14,14 @@ local CSRNDArray = require('mx.ndarray.sparse').CSRNDArray
 local _utils = require('mx.io.utils')
 local _init_data, _has_instance, _getdata_by_idx = _utils._init_data, _utils._has_instance, _utils._getdata_by_idx
 
+local _DataDesc = namedtuple('DataDesc', { 'name', 'shape' })
 ---@class mx.io.io.DataDesc
-local DataDesc = class('mx.io.io.DataDesc', namedtuple('DataDesc', { 'name', 'shape' }))
+local DataDesc = class('mx.io.io.DataDesc', _DataDesc)
 M.DataDesc = DataDesc
 
 function DataDesc:ctor(name, shape, dtype, layout)
     dtype, layout = default(dtype, mx_real_t, layout, 'NCHW')
-    self.super.ctor(self, name, shape)
+    _DataDesc.ctor(self, name, shape)
     self.dtype = dtype
     self.layout = layout
 end
@@ -145,7 +146,7 @@ M.ResizeIter = ResizeIter
 
 function ResizeIter:ctor(data_iter, size, reset_internal)
     reset_internal = default(reset_internal, true)
-    self.super.ctor(self)
+    DataIter.ctor(self)
     self.data_iter = data_iter
     self.size = size
     self.reset_internal = reset_internal
@@ -218,7 +219,7 @@ function NDArrayIter:ctor(data, label, batch_size, shuffle,
                          last_batch_handle, 'pad', data_name, 'data',
                          label_name, 'softmax_label')
 
-    self.super.ctor(self, batch_size)
+    DataIter.ctor(self, batch_size)
 
     self.data = _init_data(data, false, data_name)
     self.label = _init_data(label, true, label_name)
@@ -431,7 +432,7 @@ local MXDataIter = class('mx.io.io.MXDataIter', DataIter)
 M.MXDataIter = MXDataIter
 
 function MXDataIter:ctor(handle, data_name, label_name)
-    self.super.ctor(self)
+    DataIter.ctor(self)
     self.handle = handle
     -- debug option, used to test the speed with io effect eliminated
     self._debug_skip_load = false

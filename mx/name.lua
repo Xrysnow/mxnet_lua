@@ -43,7 +43,7 @@ local Prefix = class('mx.name.Prefix', NameManager)
 M.Prefix = Prefix
 
 function Prefix:ctor(prefix)
-    self.super.ctor(self)
+    NameManager.ctor(self)
     self._prefix = prefix
 end
 

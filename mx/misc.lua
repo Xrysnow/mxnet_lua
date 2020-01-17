@@ -21,7 +21,7 @@ M.FactorScheduler = FactorScheduler
 
 function FactorScheduler:ctor(step, factor)
     factor = factor or 0.1
-    self.super.ctor(self)
+    LearningRateScheduler.ctor(self)
     if step < 1 then
         error('Schedule step must be greater or equal than 1 round')
     end
