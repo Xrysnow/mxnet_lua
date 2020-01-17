@@ -884,7 +884,7 @@ function NDArray:astype(dtype, copy)
     if not copy and dtype == self.dtype then
         return self
     end
-    local ret = M.empty(self.shape, self.context, self.dtype)
+    local ret = M.empty(self.shape, self.context, dtype)
     self:copyto(ret)
     return ret
 end
