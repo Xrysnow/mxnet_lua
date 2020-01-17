@@ -826,11 +826,12 @@ function NDArray:__fresh_grad_set(state)
     check_call(_LIB.MXNDArraySetGradState(self.handle, ctypes.c_int(state)))
 end
 
---- Returns a cdata object with value copied from this array.
 function NDArray:asnumpy()
     return self:ascdata()
 end
 
+--- Returns a cdata object with value copied from this array.
+---@return ffi.cdata
 function NDArray:ascdata()
     local data = ffi.new(string.format('%s[%d]', _DTYPE_TO_CTYPE[self.dtype], self.size))
     check_call(_LIB.MXNDArraySyncCopyToCPU(
