@@ -841,6 +841,12 @@ function NDArray:ascdata()
     return data
 end
 
+function NDArray:get_data()
+    local data = ffi.new('void*[1]')
+    check_call(_LIB.MXNDArrayGetData(self.handle, data))
+    return data[0]
+end
+
 function NDArray:astable()
     local sz = self.size
     if sz > 65536 or self.ndim >= 3 then
