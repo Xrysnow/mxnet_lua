@@ -1,10 +1,11 @@
---
+---@class mx.random:mx.ndarray.ramdom
+local M = {}
+
 local ctypes = require('ctypes')
 local _LIB, check_call = require('mx.base')._LIB, require('mx.base').check_call
 local Context = require('mx.context').Context
 
---
-local M = {}
+table.merge(M, require('mx.ndarray.random'))
 
 --- Seeds the random number generators in MXNet.
 ---

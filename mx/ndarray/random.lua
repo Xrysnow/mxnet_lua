@@ -1,6 +1,5 @@
 ---@class mx.ndarray.ramdom:mx.ndarray.gen_random
 local M = {}
---
 
 local _Null = require('mx.base')._Null
 local current_context = require('mx.context').current_context
