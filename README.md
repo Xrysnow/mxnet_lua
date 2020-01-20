@@ -1,8 +1,8 @@
 # mxnet_lua
 
-This project is Lua language binding for [MXNet](https://github.com/apache/incubator-mxnet/).
+This project is Lua language binding for [MXNet](https://github.com/apache/incubator-mxnet/) (unofficial).
 
-It's still under construction. See `mx/__init__.lua` for progress.
+It's still under construction, see `mx/__init__.lua` for progress. `NDArray` and `Symbol` is available.
 
 ## Requirements
 
@@ -12,8 +12,7 @@ It's still under construction. See `mx/__init__.lua` for progress.
 ## Installation
 
 - make sure path of this project is in the search path of Lua
-- Windows: put `libmxnet.dll` and other binaries into `bin` folder
-- Linux: make sure `libmxnet.so` is in search path of system
+- make sure `libmxnet.dll`/`libmxnet.so` can be loaded by Lua host
 
 ## Example
 
