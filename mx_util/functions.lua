@@ -342,6 +342,7 @@ function class_property(cls, getters)
     end
 end
 
+---@return string
 function getclassname(obj)
     local t = type(obj)
     if t ~= "table" and t ~= "userdata" then
@@ -879,7 +880,7 @@ function table.prod(t)
     end
     local ret = t[1]
     for i = 2, #t do
-        ret = ret + t[i]
+        ret = ret * t[i]
     end
     return ret
 end

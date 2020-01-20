@@ -1,7 +1,7 @@
 --
 local M = {}
 
-local json = require('util.json')
+local json = require('mx_util.json')
 
 local _REGISTRY = {}
 M._REGISTRY = _REGISTRY

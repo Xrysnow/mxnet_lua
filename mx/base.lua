@@ -88,7 +88,7 @@ M.MXCallbackList = MXCallbackList
 --
 
 local function _load_lib()
-    return require('api.c_api')
+    return require('mx._c_api')
 end
 
 M.__version__ = '1.5.0'

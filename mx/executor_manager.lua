@@ -1,7 +1,7 @@
 --
 local M = {}
 
-local logging = require('python.logging')
+local logging = require('mx_py.logging')
 local mx_real_t = require('mx.base').mx_real_t
 local nd = require('mx.ndarray.__init__')
 local cpu = require('mx.context').cpu

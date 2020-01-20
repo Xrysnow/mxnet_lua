@@ -14,11 +14,9 @@ end
 if ffi.os == 'Windows' then
 
     local kernel32 = ffi.load('kernel32.dll')
-    local CP_ACP = 0         -- default to ANSI code page
-    local CP_THREAD_ACP = 3  -- current thread's ANSI code page
     local CP_UTF8 = 65001
 
-    ffi.cdef [[
+    pcall(ffi.cdef, [[
 int MultiByteToWideChar(
   unsigned int                   CodePage,
   unsigned long                   dwFlags,
@@ -40,7 +38,7 @@ int SetCurrentDirectoryW(const wchar_t* lpPathName);
 int GetCurrentDirectoryW(int nBufferLength, wchar_t* lpPathName);
 
 void Sleep(int ms);
-]]
+]])
 
     function M.toWideChar(src, bytes)
         bytes = bytes or #src

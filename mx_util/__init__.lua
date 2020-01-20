@@ -1,10 +1,10 @@
 --
 
-require('python.__init__')
-require('util.functions')
-require('util.stringify')
-require('util.ffi_')
-require('util.string')
+require('mx_py.__init__')
+require('mx_util.functions')
+require('mx_util.stringify')
+require('mx_util.ffi_')
+require('mx_util.string')
 ffi = ffi or require('ffi')
 
 function default(val, def, ...)

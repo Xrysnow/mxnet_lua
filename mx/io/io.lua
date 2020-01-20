@@ -2,7 +2,7 @@
 local M = {}
 
 local ctypes = require('ctypes')
-local namedtuple = require('python.collections').namedtuple
+local namedtuple = require('mx_py.collections').namedtuple
 
 local _b = require('mx.base')
 local _LIB, c_str_array, mx_uint, py_str, DataIterHandle, NDArrayHandle, mx_real_t, check_call, _build_param_doc = _b._LIB, _b.c_str_array, _b.mx_uint, _b.py_str, _b.DataIterHandle, _b.NDArrayHandle, _b.mx_real_t, _b.check_call, _b.build_param_doc

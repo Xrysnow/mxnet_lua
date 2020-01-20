@@ -3,7 +3,7 @@
 local M = {}
 local _TYPEDEF = require('ctypes').typedef
 local _ENUMDEF = require('ctypes').enumdef
-local _CALL = require('ctypes').caller(require('lib'))
+local _CALL = require('ctypes').caller(require('mx._lib'))
 local _FUNCDEF = require('ctypes').addDef
 -- header/c_api.h
 

@@ -1,8 +1,8 @@
 --
 local M = {}
 
-local logging = require('python.logging')
-local json = require('util.json')
+local logging = require('mx_py.logging')
+local json = require('mx_util.json')
 local ndarray = require('mx.ndarray.__init__')
 local NDArray, load = ndarray.NDArray, ndarray.load
 local random = require('mx.random')

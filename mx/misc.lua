@@ -1,5 +1,5 @@
 --
-local logging = require('python.logging')
+local logging = require('mx_py.logging')
 
 local M = {}
 

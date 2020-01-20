@@ -1,7 +1,7 @@
 --
 local M = {}
 
-local copy = require('python.copy')
+local copy = require('mx_py.copy')
 local ctypes = require('ctypes')
 local base = require('mx.base')
 local _LIB, mx_uint, NDArrayHandle, ExecutorHandle, py_str, mx_int, check_call, c_handle_array, c_array_buf, c_str_array = base._LIB, base.mx_uint, base.NDArrayHandle, base.ExecutorHandle, base.py_str, base.mx_int, base.check_call, base.c_handle_array, base.c_array_buf, base.c_str_array
