@@ -881,7 +881,7 @@ function NDArray:asscalar()
     if not table.equal(self.shape, { 1 }) then
         raise('ValueError', 'The current array is not a scalar')
     end
-    return self.asnumpy()[0]
+    return self:asnumpy()[0]
 end
 
 --- Returns a copy of the array after casting to a specified type.
