@@ -4,6 +4,9 @@ local ffi = require('ffi')
 
 function M.loadFileString(path)
     local f = io.open(path, 'rb')
+    if not f then
+        error("can't load " .. path)
+    end
     local s = f:read('a')
     f:close()
     return s
