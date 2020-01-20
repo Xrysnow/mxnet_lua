@@ -1,116 +1,4 @@
---[[
-
-Copyright (c) 2014-2017 Chukong Technologies Inc.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-]]
-
-function printLog(tag, fmt, ...)
-    local t = {
-        "[",
-        string.upper(tostring(tag)),
-        "] ",
-        string.format(tostring(fmt), ...)
-    }
-    print(table.concat(t))
-end
-
-function printError(fmt, ...)
-    printLog("ERR", fmt, ...)
-    print(debug.traceback("", 2))
-end
-
-function printInfo(fmt, ...)
-    if type(DEBUG) ~= "number" or DEBUG < 2 then
-        return
-    end
-    printLog("INFO", fmt, ...)
-end
-
-local function dump_value_(v)
-    if type(v) == "string" then
-        v = "\"" .. v .. "\""
-    end
-    return tostring(v)
-end
-
-function dump(value, description, nesting)
-    if type(nesting) ~= "number" then
-        nesting = 3
-    end
-
-    local lookupTable = {}
-    local result = {}
-
-    local traceback = string.split(debug.traceback("", 2), "\n")
-    print("dump from: " .. string.trim(traceback[3]))
-
-    local function dump_(value, description, indent, nest, keylen)
-        description = description or "<var>"
-        local spc = ""
-        if type(keylen) == "number" then
-            spc = string.rep(" ", keylen - string.len(dump_value_(description)))
-        end
-        if type(value) ~= "table" then
-            result[#result + 1] = string.format("%s%s%s = %s", indent, dump_value_(description), spc, dump_value_(value))
-        elseif lookupTable[tostring(value)] then
-            result[#result + 1] = string.format("%s%s%s = *REF*", indent, dump_value_(description), spc)
-        else
-            lookupTable[tostring(value)] = true
-            if nest > nesting then
-                result[#result + 1] = string.format("%s%s = *MAX NESTING*", indent, dump_value_(description))
-            else
-                result[#result + 1] = string.format("%s%s = {", indent, dump_value_(description))
-                local indent2 = indent .. "    "
-                local keys = {}
-                local keylen = 0
-                local values = {}
-                for k, v in pairs(value) do
-                    keys[#keys + 1] = k
-                    local vk = dump_value_(k)
-                    local vkl = string.len(vk)
-                    if vkl > keylen then
-                        keylen = vkl
-                    end
-                    values[k] = v
-                end
-                table.sort(keys, function(a, b)
-                    if type(a) == "number" and type(b) == "number" then
-                        return a < b
-                    else
-                        return tostring(a) < tostring(b)
-                    end
-                end)
-                for i, k in ipairs(keys) do
-                    dump_(values[k], k, indent2, nest + 1, keylen)
-                end
-                result[#result + 1] = string.format("%s}", indent)
-            end
-        end
-    end
-    dump_(value, description, "- ", 1)
-
-    for i, line in ipairs(result) do
-        print(line)
-    end
-end
+--
 
 function printf(fmt, ...)
     print(string.format(tostring(fmt), ...))
@@ -133,11 +21,6 @@ function checktable(value)
         value = {}
     end
     return value
-end
-
-function isset(hashtable, key)
-    local t = type(hashtable)
-    return (t == "table" or t == "userdata") and hashtable[key] ~= nil
 end
 
 local setmetatableindex_
@@ -272,9 +155,13 @@ function class(classname, ...)
             instance = {}
         end
         setmetatableindex(instance, cls)
+        instance.class = cls
 
-        instance['.class'] = cls
-        instance['.classname'] = classname
+        local not_ud = type(instance) ~= 'userdata'
+        if not_ud then
+            instance['.class'] = cls
+            instance['.classname'] = classname
+        end
         -- for super is native class
         if not instance.super then
             instance.super = {}
@@ -288,36 +175,38 @@ function class(classname, ...)
                 end
             })
         end
-        local mt = getmetatable(instance)
-        -- set once
-        if not meta_method then
-            meta_method = {}
-            for _, v in ipairs(
-                    { '__add', '__sub', '__mul', '__div', '__mod', '__pow', '__unm',
-                      '__concat', '__len', '__eq', '__lt', '__le',
-                      '__index', '__newindex', '__call', '__tostring', '__tonumber' }) do
-                meta_method[v] = instance[v]
+        if not_ud then
+            local mt = getmetatable(instance)
+            -- set once
+            if not meta_method then
+                meta_method = {}
+                for _, v in ipairs(
+                        { '__add', '__sub', '__mul', '__div', '__mod', '__pow', '__unm',
+                          '__concat', '__len', '__eq', '__lt', '__le',
+                          '__index', '__newindex', '__call', '__tostring', '__tonumber' }) do
+                    meta_method[v] = instance[v]
+                end
+                --local new_index = meta_method.__index
+                --local old_index = rawget(mt, '__index')
+                --if new_index and new_index ~= old_index then
+                --    if type(old_index) == 'function' then
+                --        meta_method.__index = function(t, k)
+                --            return new_index(t, k) or old_index(t, k)
+                --        end
+                --    else
+                --        meta_method.__index = function(t, k)
+                --            return new_index(t, k) or old_index[k]
+                --        end
+                --    end
+                --end
             end
-            --local new_index = meta_method.__index
-            --local old_index = rawget(mt, '__index')
-            --if new_index and new_index ~= old_index then
-            --    if type(old_index) == 'function' then
-            --        meta_method.__index = function(t, k)
-            --            return new_index(t, k) or old_index(t, k)
-            --        end
-            --    else
-            --        meta_method.__index = function(t, k)
-            --            return new_index(t, k) or old_index[k]
-            --        end
-            --    end
-            --end
+            for k, v in pairs(meta_method) do
+                rawset(mt, k, v)
+            end
+            mt.__supers = cls.__supers
+            mt.__cname = cls.__cname
+            dtor_proxy(instance, cls.dtor)
         end
-        for k, v in pairs(meta_method) do
-            rawset(mt, k, v)
-        end
-        mt.__supers = cls.__supers
-        mt.__cname = cls.__cname
-        dtor_proxy(instance, cls.dtor)
         instance:ctor(...)
         return instance
     end
@@ -464,36 +353,6 @@ function issubclass(cls, base)
         end
     end
     return false
-end
-
-function import_(moduleName, currentModuleName)
-    local currentModuleNameParts
-    local moduleFullName = moduleName
-    local offset = 1
-
-    while true do
-        if string.byte(moduleName, offset) ~= 46 then
-            -- .
-            moduleFullName = string.sub(moduleName, offset)
-            if currentModuleNameParts and #currentModuleNameParts > 0 then
-                moduleFullName = table.concat(currentModuleNameParts, ".") .. "." .. moduleFullName
-            end
-            break
-        end
-        offset = offset + 1
-
-        if not currentModuleNameParts then
-            if not currentModuleName then
-                local n, v = debug.getlocal(3, 1)
-                currentModuleName = v
-            end
-
-            currentModuleNameParts = string.split(currentModuleName, ".")
-        end
-        table.remove(currentModuleNameParts, #currentModuleNameParts)
-    end
-
-    return require(moduleFullName)
 end
 
 function handler(obj, method)
@@ -916,31 +775,6 @@ end
 function string.trim(input)
     input = string.gsub(input, "^[ \t\n\r]+", "")
     return string.gsub(input, "[ \t\n\r]+$", "")
-end
-
-function string.ucfirst(input)
-    return string.upper(string.sub(input, 1, 1)) .. string.sub(input, 2)
-end
-
-local function urlencodechar(char)
-    return "%" .. string.format("%02X", string.byte(char))
-end
-function string.urlencode(input)
-    -- convert line endings
-    input = string.gsub(tostring(input), "\n", "\r\n")
-    -- escape all characters but alphanumeric, '.' and '-'
-    input = string.gsub(input, "([^%w%.%- ])", urlencodechar)
-    -- convert spaces to "+" symbols
-    return string.gsub(input, " ", "+")
-end
-
-function string.urldecode(input)
-    input = string.gsub(input, "+", " ")
-    input = string.gsub(input, "%%(%x%x)", function(h)
-        return string.char(checknumber(h, 16))
-    end)
-    input = string.gsub(input, "\r\n", "\n")
-    return input
 end
 
 function string.utf8len(input)
