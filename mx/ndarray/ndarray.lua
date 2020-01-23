@@ -542,8 +542,13 @@ function NDArray:_sync_copyfrom(source_array)
                     table.concat(shape, ', '), table.concat(self.shape, ', ')))
         end
     end
-    assert(type(source_array) == 'cdata')
-    assert(ffi.sizeof(source_array) == ffi.sizeof(_DTYPE_TO_CTYPE[self.dtype]) * self.size)
+    if type(source_array) == 'string' then
+        -- copy from lua string
+        assert(#source_array == ffi.sizeof(_DTYPE_TO_CTYPE[self.dtype]) * self.size)
+    else
+        assert(type(source_array) == 'cdata')
+        assert(ffi.sizeof(source_array) == ffi.sizeof(_DTYPE_TO_CTYPE[self.dtype]) * self.size)
+    end
     check_call(_LIB.MXNDArraySyncCopyFromCPU(
             self.handle,
             ffi.cast('void*', source_array),
