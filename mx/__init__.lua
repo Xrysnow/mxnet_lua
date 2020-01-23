@@ -19,7 +19,7 @@ M.sym = require('mx.symbol.__init__')
 M.symbol_doc = require('mx.symbol_doc')
 
 M.io = require('mx.io.__init__')
---M.recordio = require('mx.recordio')
+M.recordio = require('mx.recordio')
 M.operator = require('mx.operator')
 M.random = require('mx.random')
 M.rnd = require('mx.random')
