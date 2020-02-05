@@ -1,4 +1,4 @@
----@class mx.ndarray:mx.ndarray.ndarray
+---@type mx.ndarray.ndarray|mx.ndarray.op
 local M = {}
 
 local _internal, contrib, linalg, op, random, sparse, utils, image, ndarray = require('mx.ndarray._internal'), require('mx.ndarray.contrib'), require('mx.ndarray.linalg'), require('mx.ndarray.op'), require('mx.ndarray.random'), require('mx.ndarray.sparse'), require('mx.ndarray.utils'), require('mx.ndarray.image'), require('mx.ndarray.ndarray')
