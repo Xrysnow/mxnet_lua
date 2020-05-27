@@ -5,7 +5,7 @@ on:
     types: manual_release
 
 jobs:
-  release:
+  pre:
     runs-on: ubuntu-latest
     steps:
       - name: Get Date
@@ -13,13 +13,13 @@ jobs:
         id: current-time
         with:
           format: YYYYMMDD
-      - name: Set Variables
-        id: var
-        outputs:
-          RELEASE_DATE: ${{ steps.current-time.outputs.formattedTime }}
-          FILE_NAME: mxlua_release_${{ steps.current-time.outputs.formattedTime }}.zip
-        run: |
-          echo set variables
+    outputs:
+      RELEASE_DATE: ${{ steps.current-time.outputs.formattedTime }}
+      FILE_NAME: mxlua_release_${{ steps.current-time.outputs.formattedTime }}.zip
+  release:
+    runs-on: ubuntu-latest
+    needs: pre
+    steps:
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
@@ -27,7 +27,7 @@ jobs:
       - name: Packing Project
         id: packing-project
         env:
-          FILE_NAME: ${{ steps.var.outputs.FILE_NAME }}
+          FILE_NAME: ${{ needs.pre.outputs.FILE_NAME }}
         run: |
           echo FILE_NAME: $FILE_NAME
           zip -q -1 -r $FILE_NAME *
@@ -36,7 +36,7 @@ jobs:
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_DATE: ${{ steps.var.outputs.RELEASE_DATE }}
+          RELEASE_DATE: ${{ needs.pre.outputs.RELEASE_DATE }}
         with:
           tag_name: $RELEASE_DATE
           release_name: $RELEASE_DATE
@@ -49,7 +49,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FILE_NAME: ${{ steps.var.outputs.FILE_NAME }}
+          FILE_NAME: ${{ needs.pre.outputs.FILE_NAME }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./$FILE_NAME
