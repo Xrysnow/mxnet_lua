@@ -38,10 +38,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_DATE: ${{ needs.pre.outputs.RELEASE_DATE }}
         with:
-          tag_name: $RELEASE_DATE
-          release_name: $RELEASE_DATE
+          tag_name: ${{ env.RELEASE_DATE }}
+          release_name: ${{ env.RELEASE_DATE }}
           body: |
-            Release $RELEASE_DATE
+            Release ${{ env.RELEASE_DATE }}
           draft: false
           prerelease: true
       - name: Upload Release Asset
@@ -52,6 +52,6 @@ jobs:
           FILE_NAME: ${{ needs.pre.outputs.FILE_NAME }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./$FILE_NAME
-          asset_name: $FILE_NAME
+          asset_path: ./${{ env.FILE_NAME }}
+          asset_name: ${{ env.FILE_NAME }}
           asset_content_type: application/zip
