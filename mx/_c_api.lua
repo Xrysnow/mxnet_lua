@@ -1,5 +1,5 @@
 --
-
+---@class mx.c_api
 local M = {}
 local _TYPEDEF = require('ctypes').typedef
 local _ENUMDEF = require('ctypes').enumdef
@@ -10,7 +10,7 @@ local _FUNCDEF = require('ctypes').addDef
 --
 
 ---@brief manually define unsigned int
-_TYPEDEF("mx_uint", "unsigned int")
+_TYPEDEF("mx_uint", "uint32_t")
 
 --
 
@@ -138,6 +138,11 @@ _TYPEDEF("ExecutorMonitorCallback", "void*")
 
 --
 
+---@brief Monitor callback called at operator level for cached op
+_TYPEDEF("CachedOpMonitorCallback", "void*")
+
+--
+
 _TYPEDEF("MXGenericCallback", "void*")
 
 --
@@ -217,7 +222,7 @@ _TYPEDEF("CustomFunctionDelFunc", "void*")
 --- 
 ---@brief return str message of the last error
 --- all function in this file will return 0 when success
---- and -1 when an error occured,
+--- and -1 when an error occurred,
 --- MXGetLastError can be called to retrieve the error
 --- 
 --- this function is threadsafe and can be called by different thread
@@ -227,6 +232,18 @@ function M.MXGetLastError()
     return _CALL("MXGetLastError")
 end
 _FUNCDEF("MXGetLastError", {  }, "const char *")
+
+--
+
+--- 
+---@brief Load library dynamically
+---@param path string @(const char *) to the library .so file
+---@return number @(int) 0 when success, -1 when failure happens.
+--- 
+function M.MXLoadLib(path)
+    return _CALL("MXLoadLib", path)
+end
+_FUNCDEF("MXLoadLib", { "const char *" }, "int")
 
 --
 
@@ -269,9 +286,9 @@ _FUNCDEF("MXRandomSeedContext", { "int", "int", "int" }, "int")
 
 --- 
 ---@brief Notify the engine about a shutdown,
----  This can help engine to print less messages into display.
+--- This can help engine to print less messages into display.
 --- 
----  User do not have to call this function.
+--- User do not have to call this function.
 ---@return number @(int) 0 when success, -1 when failure happens.
 --- 
 function M.MXNotifyShutdown()
@@ -286,11 +303,11 @@ _FUNCDEF("MXNotifyShutdown", {  }, "int")
 ---@param num_params number @(int) Number of parameters
 ---@param keys number @(const char * const *) array of parameter keys
 ---@param vals number @(const char * const *) array of parameter values
----@param kvStoreHandle number @(KVStoreHandle) handle to kvstore
+---@param kvstoreHandle number @(KVStoreHandle) handle to kvstore
 ---@return number @(int) 0 when success, -1 when failure happens.
 --- 
-function M.MXSetProcessProfilerConfig(num_params, keys, vals, kvStoreHandle)
-    return _CALL("MXSetProcessProfilerConfig", num_params, keys, vals, kvStoreHandle)
+function M.MXSetProcessProfilerConfig(num_params, keys, vals, kvstoreHandle)
+    return _CALL("MXSetProcessProfilerConfig", num_params, keys, vals, kvstoreHandle)
 end
 _FUNCDEF("MXSetProcessProfilerConfig", { "int", "const char * const *", "const char * const *", "KVStoreHandle" }, "int")
 
@@ -313,8 +330,8 @@ _FUNCDEF("MXSetProfilerConfig", { "int", "const char * const *", "const char * c
 --- 
 ---@brief Set up state of profiler for either worker or server process
 ---@param state number @(int) indicate the working state of profiler,
----  profiler not running when state == 0,
----  profiler running when state == 1
+--- profiler not running when state == 0,
+--- profiler running when state == 1
 ---@param profile_process number @(int) an int,
 --- when 0 command is for worker/current process,
 --- when 1 command is for server process
@@ -331,8 +348,8 @@ _FUNCDEF("MXSetProcessProfilerState", { "int", "int", "KVStoreHandle" }, "int")
 --- 
 ---@brief Set up state of profiler for current process
 ---@param state number @(int) indicate the working state of profiler,
----  profiler not running when state == 0,
----  profiler running when state == 1
+--- profiler not running when state == 0,
+--- profiler running when state == 1
 ---@return number @(int) 0 when success, -1 when failure happens.
 --- 
 function M.MXSetProfilerState(state)
@@ -386,11 +403,11 @@ _FUNCDEF("MXAggregateProfileStatsPrint", { "const char * *", "int" }, "int")
 
 --- 
 ---@brief Print sorted aggregate stats to the a string
----        How aggregate stats are stored will not change
+---       How aggregate stats are stored will not change
 ---@param out_str number @(const char * *) will receive a pointer to the output string
 ---@param reset number @(int) clear the aggregate stats after printing
 ---@param format number @(int) whether to return in tabular or json format
----@param sort_by number @(int) sort by avg, min, max, or count
+---@param sort_by number @(int) sort by total, avg, min, max, or count
 ---@param ascending number @(int) whether to sort ascendingly
 ---@return number @(int) 0 when success, -1 when failure happens.
 ---@note
@@ -612,7 +629,7 @@ _FUNCDEF("MXGetGPUCount", { "int *" }, "int")
 
 --- 
 ---@brief get the free and total available memory on a GPU
----  Note: Deprecated, use MXGetGPUMemoryInformation64 instead.
+--- Note: Deprecated, use MXGetGPUMemoryInformation64 instead.
 ---@param dev number @(int) the GPU number to query
 ---@param free_mem number @(int *) pointer to the integer holding free GPU memory
 ---@param total_mem number @(int *) pointer to the integer holding total GPU memory
@@ -653,8 +670,8 @@ _FUNCDEF("MXGetVersion", { "int *" }, "int")
 
 --- 
 ---@brief create a NDArray handle that is not initialized
----  can be used to pass in as mutate variables
----  to hold the result of NDArray
+--- can be used to pass in as mutate variables
+--- to hold the result of NDArray
 ---@param out number @(NDArrayHandle *) the returning handle
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
@@ -667,30 +684,30 @@ _FUNCDEF("MXNDArrayCreateNone", { "NDArrayHandle *" }, "int")
 
 --- 
 ---@brief create a NDArray with specified shape
----@param shape number @(const mx_uint *) the pointer to the shape
----@param ndim number @(mx_uint) the dimension of the shape
+---@param shape number @(const uint32_t *) the pointer to the shape
+---@param ndim number @(uint32_t) the dimension of the shape
 ---@param dev_type number @(int) device type, specify device we want to take
 ---@param dev_id number @(int) the device id of the specific device
 ---@param delay_alloc number @(int) whether to delay allocation until
----    the narray is first mutated
+---   the narray is first mutated
 ---@param out number @(NDArrayHandle *) the returning handle
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXNDArrayCreate(shape, ndim, dev_type, dev_id, delay_alloc, out)
     return _CALL("MXNDArrayCreate", shape, ndim, dev_type, dev_id, delay_alloc, out)
 end
-_FUNCDEF("MXNDArrayCreate", { "const mx_uint *", "mx_uint", "int", "int", "int", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXNDArrayCreate", { "const uint32_t *", "uint32_t", "int", "int", "int", "NDArrayHandle *" }, "int")
 
 --
 
 --- 
 ---@brief create a NDArray with specified shape and data type
----@param shape number @(const mx_uint *) the pointer to the shape
----@param ndim number @(mx_uint) the dimension of the shape
+---@param shape number @(const uint32_t *) the pointer to the shape
+---@param ndim number @(uint32_t) the dimension of the shape
 ---@param dev_type number @(int) device type, specify device we want to take
 ---@param dev_id number @(int) the device id of the specific device
 ---@param delay_alloc number @(int) whether to delay allocation until
----    the narray is first mutated
+---   the narray is first mutated
 ---@param dtype number @(int) data type of created array
 ---@param out number @(NDArrayHandle *) the returning handle
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -698,31 +715,66 @@ _FUNCDEF("MXNDArrayCreate", { "const mx_uint *", "mx_uint", "int", "int", "int",
 function M.MXNDArrayCreateEx(shape, ndim, dev_type, dev_id, delay_alloc, dtype, out)
     return _CALL("MXNDArrayCreateEx", shape, ndim, dev_type, dev_id, delay_alloc, dtype, out)
 end
-_FUNCDEF("MXNDArrayCreateEx", { "const mx_uint *", "mx_uint", "int", "int", "int", "int", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXNDArrayCreateEx", { "const uint32_t *", "uint32_t", "int", "int", "int", "int", "NDArrayHandle *" }, "int")
+
+--
+
+---@param shape number @(const int64_t *)
+---@param ndim number @(int)
+---@param dev_type number @(int)
+---@param dev_id number @(int)
+---@param delay_alloc number @(int)
+---@param dtype number @(int)
+---@param out number @(NDArrayHandle *)
+---@return number @(int)
+function M.MXNDArrayCreateEx64(shape, ndim, dev_type, dev_id, delay_alloc, dtype, out)
+    return _CALL("MXNDArrayCreateEx64", shape, ndim, dev_type, dev_id, delay_alloc, dtype, out)
+end
+_FUNCDEF("MXNDArrayCreateEx64", { "const int64_t *", "int", "int", "int", "int", "int", "NDArrayHandle *" }, "int")
 
 --
 
 --- 
 ---@brief create an empty sparse NDArray with specified shape and data type
 ---@param storage_type number @(int) the storage type of the ndarray
----@param shape number @(const mx_uint *) the pointer to the shape
----@param ndim number @(mx_uint) the dimension of the shape
+---@param shape number @(const uint32_t *) the pointer to the shape
+---@param ndim number @(uint32_t) the dimension of the shape
 ---@param dev_type number @(int) device type, specify device we want to take
 ---@param dev_id number @(int) the device id of the specific device
 ---@param delay_alloc number @(int) whether to delay allocation until
----        the narray is first mutated
+---       the narray is first mutated
 ---@param dtype number @(int) data type of created array
----@param num_aux number @(mx_uint) the number of aux data to support this ndarray
+---@param num_aux number @(uint32_t) the number of aux data to support this ndarray
 ---@param aux_type number @(int *) data type of the aux data for the created array
----@param aux_ndims number @(mx_uint *) the dimension of the shapes of aux data
----@param aux_shape number @(const mx_uint *) the shapes of aux data
+---@param aux_ndims number @(uint32_t *) the dimension of the shapes of aux data
+---@param aux_shape number @(const uint32_t *) the shapes of aux data
 ---@param out number @(NDArrayHandle *) the returning handle
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXNDArrayCreateSparseEx(storage_type, shape, ndim, dev_type, dev_id, delay_alloc, dtype, num_aux, aux_type, aux_ndims, aux_shape, out)
     return _CALL("MXNDArrayCreateSparseEx", storage_type, shape, ndim, dev_type, dev_id, delay_alloc, dtype, num_aux, aux_type, aux_ndims, aux_shape, out)
 end
-_FUNCDEF("MXNDArrayCreateSparseEx", { "int", "const mx_uint *", "mx_uint", "int", "int", "int", "int", "mx_uint", "int *", "mx_uint *", "const mx_uint *", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXNDArrayCreateSparseEx", { "int", "const uint32_t *", "uint32_t", "int", "int", "int", "int", "uint32_t", "int *", "uint32_t *", "const uint32_t *", "NDArrayHandle *" }, "int")
+
+--
+
+---@param storage_type number @(int)
+---@param shape number @(const int64_t *)
+---@param ndim number @(int)
+---@param dev_type number @(int)
+---@param dev_id number @(int)
+---@param delay_alloc number @(int)
+---@param dtype number @(int)
+---@param num_aux number @(uint32_t)
+---@param aux_type number @(int *)
+---@param aux_ndims number @(int *)
+---@param aux_shape number @(const int64_t *)
+---@param out number @(NDArrayHandle *)
+---@return number @(int)
+function M.MXNDArrayCreateSparseEx64(storage_type, shape, ndim, dev_type, dev_id, delay_alloc, dtype, num_aux, aux_type, aux_ndims, aux_shape, out)
+    return _CALL("MXNDArrayCreateSparseEx64", storage_type, shape, ndim, dev_type, dev_id, delay_alloc, dtype, num_aux, aux_type, aux_ndims, aux_shape, out)
+end
+_FUNCDEF("MXNDArrayCreateSparseEx64", { "int", "const int64_t *", "int", "int", "int", "int", "int", "uint32_t", "int *", "int *", "const int64_t *", "NDArrayHandle *" }, "int")
 
 --
 
@@ -757,7 +809,7 @@ _FUNCDEF("MXNDArraySaveRawBytes", { "NDArrayHandle", "size_t *", "const char * *
 --- 
 ---@brief Save list of narray into the file.
 ---@param fname string @(const char *) name of the file.
----@param num_args number @(mx_uint) number of arguments to save.
+---@param num_args number @(uint32_t) number of arguments to save.
 ---@param args number @(NDArrayHandle *) the array of NDArrayHandles to be saved.
 ---@param keys number @(const char * *) the name of the NDArray, optional, can be NULL
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -765,23 +817,23 @@ _FUNCDEF("MXNDArraySaveRawBytes", { "NDArrayHandle", "size_t *", "const char * *
 function M.MXNDArraySave(fname, num_args, args, keys)
     return _CALL("MXNDArraySave", fname, num_args, args, keys)
 end
-_FUNCDEF("MXNDArraySave", { "const char *", "mx_uint", "NDArrayHandle *", "const char * *" }, "int")
+_FUNCDEF("MXNDArraySave", { "const char *", "uint32_t", "NDArrayHandle *", "const char * *" }, "int")
 
 --
 
 --- 
 ---@brief Load list of narray from the file.
 ---@param fname string @(const char *) name of the file.
----@param out_size number @(mx_uint *) number of narray loaded.
+---@param out_size number @(uint32_t *) number of narray loaded.
 ---@param out_arr number @(NDArrayHandle * *) head of the returning narray handles.
----@param out_name_size number @(mx_uint *) size of output name arrray.
+---@param out_name_size number @(uint32_t *) size of output name arrray.
 ---@param out_names number @(const char * * *) the names of returning NDArrays, can be NULL
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXNDArrayLoad(fname, out_size, out_arr, out_name_size, out_names)
     return _CALL("MXNDArrayLoad", fname, out_size, out_arr, out_name_size, out_names)
 end
-_FUNCDEF("MXNDArrayLoad", { "const char *", "mx_uint *", "NDArrayHandle * *", "mx_uint *", "const char * * *" }, "int")
+_FUNCDEF("MXNDArrayLoad", { "const char *", "uint32_t *", "NDArrayHandle * *", "uint32_t *", "const char * * *" }, "int")
 
 --
 
@@ -793,25 +845,25 @@ _FUNCDEF("MXNDArrayLoad", { "const char *", "mx_uint *", "NDArrayHandle * *", "m
 --- from a specified file.
 ---@param ndarray_buffer number @(const void *) pointer to the start of the ndarray file content
 ---@param size number @(size_t) size of the file
----@param out_size number @(mx_uint *) number of narray loaded.
+---@param out_size number @(uint32_t *) number of narray loaded.
 ---@param out_arr number @(NDArrayHandle * *) head of the returning narray handles.
----@param out_name_size number @(mx_uint *) size of output name arrray.
+---@param out_name_size number @(uint32_t *) size of output name arrray.
 ---@param out_names number @(const char * * *) the names of returning NDArrays, can be NULL
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXNDArrayLoadFromBuffer(ndarray_buffer, size, out_size, out_arr, out_name_size, out_names)
     return _CALL("MXNDArrayLoadFromBuffer", ndarray_buffer, size, out_size, out_arr, out_name_size, out_names)
 end
-_FUNCDEF("MXNDArrayLoadFromBuffer", { "const void *", "size_t", "mx_uint *", "NDArrayHandle * *", "mx_uint *", "const char * * *" }, "int")
+_FUNCDEF("MXNDArrayLoadFromBuffer", { "const void *", "size_t", "uint32_t *", "NDArrayHandle * *", "uint32_t *", "const char * * *" }, "int")
 
 --
 
 --- 
 ---@brief Perform a synchronize copy from a continugous CPU memory region.
 --- 
----  This function will call WaitToWrite before the copy is performed.
----  This is useful to copy data from existing memory region that are
----  not wrapped by NDArray(thus dependency not being tracked).
+--- This function will call WaitToWrite before the copy is performed.
+--- This is useful to copy data from existing memory region that are
+--- not wrapped by NDArray(thus dependency not being tracked).
 --- 
 ---@param handle number @(NDArrayHandle) the NDArray handle
 ---@param data number @(const void *) the data source to copy from.
@@ -827,9 +879,9 @@ _FUNCDEF("MXNDArraySyncCopyFromCPU", { "NDArrayHandle", "const void *", "size_t"
 --- 
 ---@brief Perform a synchronize copyto a continugous CPU memory region.
 --- 
----  This function will call WaitToRead before the copy is performed.
----  This is useful to copy data from existing memory region that are
----  not wrapped by NDArray(thus dependency not being tracked).
+--- This function will call WaitToRead before the copy is performed.
+--- This is useful to copy data from existing memory region that are
+--- not wrapped by NDArray(thus dependency not being tracked).
 --- 
 ---@param handle number @(NDArrayHandle) the NDArray handle
 ---@param data number @(void *) the data source to copy into.
@@ -859,7 +911,7 @@ _FUNCDEF("MXNDArraySyncCopyFromNDArray", { "NDArrayHandle", "const NDArrayHandle
 --- 
 ---@brief check whether the NDArray format is valid
 ---@param full_check boolean @(const bool) if `True`, rigorous check, O(N) operations
----    Otherwise basic check, O(1) operations
+---   Otherwise basic check, O(1) operations
 --- 
 function M.MXNDArraySyncCheckFormat(handle, full_check)
     return _CALL("MXNDArraySyncCheckFormat", handle, full_check)
@@ -870,7 +922,7 @@ _FUNCDEF("MXNDArraySyncCheckFormat", { "NDArrayHandle", "const bool" }, "int")
 
 --- 
 ---@brief Wait until all the pending writes with respect NDArray are finished.
----  Always call this before read data out synchronizely.
+--- Always call this before read data out synchronizely.
 ---@param handle number @(NDArrayHandle) the NDArray handle
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
@@ -883,7 +935,7 @@ _FUNCDEF("MXNDArrayWaitToRead", { "NDArrayHandle" }, "int")
 
 --- 
 ---@brief Wait until all the pending read/write with respect NDArray are finished.
----  Always call this before write data into NDArray synchronizely.
+--- Always call this before write data into NDArray synchronizely.
 ---@param handle number @(NDArrayHandle) the NDArray handle
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
@@ -896,7 +948,7 @@ _FUNCDEF("MXNDArrayWaitToWrite", { "NDArrayHandle" }, "int")
 
 --- 
 ---@brief wait until all delayed operations in
----   the system is completed
+---  the system is completed
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXNDArrayWaitAll()
@@ -921,29 +973,52 @@ _FUNCDEF("MXNDArrayFree", { "NDArrayHandle" }, "int")
 --- 
 ---@brief Slice the NDArray along axis 0.
 ---@param handle number @(NDArrayHandle) the handle to the NDArray
----@param slice_begin number @(mx_uint) The beginning index of slice
----@param slice_end number @(mx_uint) The ending index of slice
+---@param slice_begin number @(uint32_t) The beginning index of slice
+---@param slice_end number @(uint32_t) The ending index of slice
 ---@param out number @(NDArrayHandle *) The NDArrayHandle of sliced NDArray
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXNDArraySlice(handle, slice_begin, slice_end, out)
     return _CALL("MXNDArraySlice", handle, slice_begin, slice_end, out)
 end
-_FUNCDEF("MXNDArraySlice", { "NDArrayHandle", "mx_uint", "mx_uint", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXNDArraySlice", { "NDArrayHandle", "uint32_t", "uint32_t", "NDArrayHandle *" }, "int")
+
+--
+
+---@param handle number @(NDArrayHandle)
+---@param slice_begin number @(int64_t)
+---@param slice_end number @(int64_t)
+---@param out number @(NDArrayHandle *)
+---@return number @(int)
+function M.MXNDArraySlice64(handle, slice_begin, slice_end, out)
+    return _CALL("MXNDArraySlice64", handle, slice_begin, slice_end, out)
+end
+_FUNCDEF("MXNDArraySlice64", { "NDArrayHandle", "int64_t", "int64_t", "NDArrayHandle *" }, "int")
 
 --
 
 --- 
 ---@brief Index the NDArray along axis 0.
 ---@param handle number @(NDArrayHandle) the handle to the NDArray
----@param idx number @(mx_uint) the index
+---@param idx number @(uint32_t) the index
 ---@param out number @(NDArrayHandle *) The NDArrayHandle of output NDArray
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXNDArrayAt(handle, idx, out)
     return _CALL("MXNDArrayAt", handle, idx, out)
 end
-_FUNCDEF("MXNDArrayAt", { "NDArrayHandle", "mx_uint", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXNDArrayAt", { "NDArrayHandle", "uint32_t", "NDArrayHandle *" }, "int")
+
+--
+
+---@param handle number @(NDArrayHandle)
+---@param idx number @(int64_t)
+---@param out number @(NDArrayHandle *)
+---@return number @(int)
+function M.MXNDArrayAt64(handle, idx, out)
+    return _CALL("MXNDArrayAt64", handle, idx, out)
+end
+_FUNCDEF("MXNDArrayAt64", { "NDArrayHandle", "int64_t", "NDArrayHandle *" }, "int")
 
 --
 
@@ -991,14 +1066,25 @@ _FUNCDEF("MXNDArrayReshape64", { "NDArrayHandle", "int", "dim_t *", "bool", "NDA
 ---@brief DEPRECATED. Use MXNDArrayGetShapeEx instead.
 --- get the shape of the array
 ---@param handle number @(NDArrayHandle) the handle to the narray
----@param out_dim number @(mx_uint *) the output dimension
----@param out_pdata number @(const mx_uint * *) pointer holder to get data pointer of the shape
+---@param out_dim number @(uint32_t *) the output dimension
+---@param out_pdata number @(const uint32_t * *) pointer holder to get data pointer of the shape
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXNDArrayGetShape(handle, out_dim, out_pdata)
     return _CALL("MXNDArrayGetShape", handle, out_dim, out_pdata)
 end
-_FUNCDEF("MXNDArrayGetShape", { "NDArrayHandle", "mx_uint *", "const mx_uint * *" }, "int")
+_FUNCDEF("MXNDArrayGetShape", { "NDArrayHandle", "uint32_t *", "const uint32_t * *" }, "int")
+
+--
+
+---@param handle number @(NDArrayHandle)
+---@param out_dim number @(int *)
+---@param out_pdata number @(const int64_t * *)
+---@return number @(int)
+function M.MXNDArrayGetShape64(handle, out_dim, out_pdata)
+    return _CALL("MXNDArrayGetShape64", handle, out_dim, out_pdata)
+end
+_FUNCDEF("MXNDArrayGetShape64", { "NDArrayHandle", "int *", "const int64_t * *" }, "int")
 
 --
 
@@ -1013,6 +1099,17 @@ function M.MXNDArrayGetShapeEx(handle, out_dim, out_pdata)
     return _CALL("MXNDArrayGetShapeEx", handle, out_dim, out_pdata)
 end
 _FUNCDEF("MXNDArrayGetShapeEx", { "NDArrayHandle", "int *", "const int * *" }, "int")
+
+--
+
+---@param handle number @(NDArrayHandle)
+---@param out_dim number @(int *)
+---@param out_pdata number @(const int64_t * *)
+---@return number @(int)
+function M.MXNDArrayGetShapeEx64(handle, out_dim, out_pdata)
+    return _CALL("MXNDArrayGetShapeEx64", handle, out_dim, out_pdata)
+end
+_FUNCDEF("MXNDArrayGetShapeEx64", { "NDArrayHandle", "int *", "const int64_t * *" }, "int")
 
 --
 
@@ -1031,9 +1128,9 @@ _FUNCDEF("MXNDArrayGetData", { "NDArrayHandle", "void * *" }, "int")
 
 --- 
 ---@brief Create a reference view of NDArray that
----  represents as DLManagedTensor
----  Notice: MXNet uses asynchronous execution. Please call MXNDArrayWaitToRead or
----          MXNDArrayWaitToWrite before calling MXNDArrayToDLPack.
+--- represents as DLManagedTensor
+--- Notice: MXNet uses asynchronous execution. Please call MXNDArrayWaitToRead or
+---         MXNDArrayWaitToWrite before calling MXNDArrayToDLPack.
 ---@param handle number @(NDArrayHandle) the handle to the ndarray
 ---@param out_dlpack number @(DLManagedTensorHandle *) pointer holder to get pointer of DLManagedTensor
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -1056,7 +1153,7 @@ _FUNCDEF("MXNDArrayToDLPack", { "NDArrayHandle", "DLManagedTensorHandle *" }, "i
 --- The memory is retained until the NDArray went out of scope.
 --- 
 ---@param dlpack number @(DLManagedTensorHandle) the pointer of the input DLManagedTensor
----@param transient_handle whether the handle will be destructed before calling the deleter
+---@param transient_handle @whether the handle will be destructed before calling the deleter
 ---@param out_handle number @(NDArrayHandle *) pointer holder to get pointer of NDArray
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
@@ -1116,14 +1213,25 @@ _FUNCDEF("MXNDArrayGetDType", { "NDArrayHandle", "int *" }, "int")
 --- 
 ---@brief get the type of the ith aux data in NDArray
 ---@param handle number @(NDArrayHandle) the handle to the narray
----@param i number @(mx_uint) the index of the aux data
+---@param i number @(uint32_t) the index of the aux data
 ---@param out_type number @(int *) pointer holder to get type of aux data
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXNDArrayGetAuxType(handle, i, out_type)
     return _CALL("MXNDArrayGetAuxType", handle, i, out_type)
 end
-_FUNCDEF("MXNDArrayGetAuxType", { "NDArrayHandle", "mx_uint", "int *" }, "int")
+_FUNCDEF("MXNDArrayGetAuxType", { "NDArrayHandle", "uint32_t", "int *" }, "int")
+
+--
+
+---@param handle number @(NDArrayHandle)
+---@param i number @(int64_t)
+---@param out_type number @(int *)
+---@return number @(int)
+function M.MXNDArrayGetAuxType64(handle, i, out_type)
+    return _CALL("MXNDArrayGetAuxType64", handle, i, out_type)
+end
+_FUNCDEF("MXNDArrayGetAuxType64", { "NDArrayHandle", "int64_t", "int *" }, "int")
 
 --
 
@@ -1135,7 +1243,18 @@ _FUNCDEF("MXNDArrayGetAuxType", { "NDArrayHandle", "mx_uint", "int *" }, "int")
 function M.MXNDArrayGetAuxNDArray(handle, i, out)
     return _CALL("MXNDArrayGetAuxNDArray", handle, i, out)
 end
-_FUNCDEF("MXNDArrayGetAuxNDArray", { "NDArrayHandle", "mx_uint", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXNDArrayGetAuxNDArray", { "NDArrayHandle", "uint32_t", "NDArrayHandle *" }, "int")
+
+--
+
+---@param handle number @(NDArrayHandle)
+---@param i number @(int64_t)
+---@param out number @(NDArrayHandle *)
+---@return number @(int)
+function M.MXNDArrayGetAuxNDArray64(handle, i, out)
+    return _CALL("MXNDArrayGetAuxNDArray64", handle, i, out)
+end
+_FUNCDEF("MXNDArrayGetAuxNDArray64", { "NDArrayHandle", "int64_t", "NDArrayHandle *" }, "int")
 
 --
 
@@ -1217,15 +1336,15 @@ _FUNCDEF("MXNDArrayGetGradState", { "NDArrayHandle", "int *" }, "int")
 
 --- 
 ---@brief list all the available functions handles
----   most user can use it to list all the needed functions
----@param out_size number @(mx_uint *) the size of returned array
+---  most user can use it to list all the needed functions
+---@param out_size number @(uint32_t *) the size of returned array
 ---@param out_array number @(FunctionHandle * *) the output function array
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXListFunctions(out_size, out_array)
     return _CALL("MXListFunctions", out_size, out_array)
 end
-_FUNCDEF("MXListFunctions", { "mx_uint *", "FunctionHandle * *" }, "int")
+_FUNCDEF("MXListFunctions", { "uint32_t *", "FunctionHandle * *" }, "int")
 
 --
 
@@ -1247,7 +1366,7 @@ _FUNCDEF("MXGetFunction", { "const char *", "FunctionHandle *" }, "int")
 ---@param fun number @(FunctionHandle) The function handle.
 ---@param name number @(const char * *) The returned name of the function.
 ---@param description number @(const char * *) The returned description of the function.
----@param num_args number @(mx_uint *) Number of arguments.
+---@param num_args number @(uint32_t *) Number of arguments.
 ---@param arg_names number @(const char * * *) Name of the arguments.
 ---@param arg_type_infos number @(const char * * *) Type information about the arguments.
 ---@param arg_descriptions number @(const char * * *) Description information about the arguments.
@@ -1257,16 +1376,16 @@ _FUNCDEF("MXGetFunction", { "const char *", "FunctionHandle *" }, "int")
 function M.MXFuncGetInfo(fun, name, description, num_args, arg_names, arg_type_infos, arg_descriptions, return_type)
     return _CALL("MXFuncGetInfo", fun, name, description, num_args, arg_names, arg_type_infos, arg_descriptions, return_type)
 end
-_FUNCDEF("MXFuncGetInfo", { "FunctionHandle", "const char * *", "const char * *", "mx_uint *", "const char * * *", "const char * * *", "const char * * *", "const char * *" }, "int")
+_FUNCDEF("MXFuncGetInfo", { "FunctionHandle", "const char * *", "const char * *", "uint32_t *", "const char * * *", "const char * * *", "const char * * *", "const char * *" }, "int")
 
 --
 
 --- 
 ---@brief get the argument requirements of the function
 ---@param fun number @(FunctionHandle) input function handle
----@param num_use_vars number @(mx_uint *) how many NDArrays to be passed in as used_vars
----@param num_scalars number @(mx_uint *) scalar variable is needed
----@param num_mutate_vars number @(mx_uint *) how many NDArrays to be passed in as mutate_vars
+---@param num_use_vars number @(uint32_t *) how many NDArrays to be passed in as used_vars
+---@param num_scalars number @(uint32_t *) scalar variable is needed
+---@param num_mutate_vars number @(uint32_t *) how many NDArrays to be passed in as mutate_vars
 ---@param type_mask number @(int *) the type mask of this function
 ---@return number @(int) 0 when success, -1 when failure happens
 ---@sa MXFuncInvoke
@@ -1274,16 +1393,16 @@ _FUNCDEF("MXFuncGetInfo", { "FunctionHandle", "const char * *", "const char * *"
 function M.MXFuncDescribe(fun, num_use_vars, num_scalars, num_mutate_vars, type_mask)
     return _CALL("MXFuncDescribe", fun, num_use_vars, num_scalars, num_mutate_vars, type_mask)
 end
-_FUNCDEF("MXFuncDescribe", { "FunctionHandle", "mx_uint *", "mx_uint *", "mx_uint *", "int *" }, "int")
+_FUNCDEF("MXFuncDescribe", { "FunctionHandle", "uint32_t *", "uint32_t *", "uint32_t *", "int *" }, "int")
 
 --
 
 --- 
 ---@brief invoke a function, the array size of passed in arguments
----   must match the values in the
+---  must match the values in the
 ---@param fun number @(FunctionHandle) the function
 ---@param use_vars number @(NDArrayHandle *) the normal arguments passed to function
----@param scalar_args number @(mx_float *) the scalar qarguments
+---@param scalar_args number @(float *) the scalar qarguments
 ---@param mutate_vars number @(NDArrayHandle *) the mutate arguments
 ---@return number @(int) 0 when success, -1 when failure happens
 ---@sa MXFuncDescribeArgs
@@ -1291,16 +1410,16 @@ _FUNCDEF("MXFuncDescribe", { "FunctionHandle", "mx_uint *", "mx_uint *", "mx_uin
 function M.MXFuncInvoke(fun, use_vars, scalar_args, mutate_vars)
     return _CALL("MXFuncInvoke", fun, use_vars, scalar_args, mutate_vars)
 end
-_FUNCDEF("MXFuncInvoke", { "FunctionHandle", "NDArrayHandle *", "mx_float *", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXFuncInvoke", { "FunctionHandle", "NDArrayHandle *", "float *", "NDArrayHandle *" }, "int")
 
 --
 
 --- 
 ---@brief invoke a function, the array size of passed in arguments
----   must match the values in the
+---  must match the values in the
 ---@param fun number @(FunctionHandle) the function
 ---@param use_vars number @(NDArrayHandle *) the normal arguments passed to function
----@param scalar_args number @(mx_float *) the scalar qarguments
+---@param scalar_args number @(float *) the scalar qarguments
 ---@param mutate_vars number @(NDArrayHandle *) the mutate arguments
 ---@param num_params number @(int) number of keyword parameters
 ---@param param_keys number @(char * *) keys for keyword parameters
@@ -1311,7 +1430,7 @@ _FUNCDEF("MXFuncInvoke", { "FunctionHandle", "NDArrayHandle *", "mx_float *", "N
 function M.MXFuncInvokeEx(fun, use_vars, scalar_args, mutate_vars, num_params, param_keys, param_vals)
     return _CALL("MXFuncInvokeEx", fun, use_vars, scalar_args, mutate_vars, num_params, param_keys, param_vals)
 end
-_FUNCDEF("MXFuncInvokeEx", { "FunctionHandle", "NDArrayHandle *", "mx_float *", "NDArrayHandle *", "int", "char * *", "char * *" }, "int")
+_FUNCDEF("MXFuncInvokeEx", { "FunctionHandle", "NDArrayHandle *", "float *", "NDArrayHandle *", "int", "char * *", "char * *" }, "int")
 
 --
 
@@ -1406,19 +1525,20 @@ _FUNCDEF("MXAutogradIsTraining", { "bool *" }, "int")
 
 --- 
 ---@brief get whether numpy compatibility is on
----@param curr number @(bool *) returns the current status
+---@param curr number @(int *) returns the current status
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXIsNumpyShape(curr)
     return _CALL("MXIsNumpyShape", curr)
 end
-_FUNCDEF("MXIsNumpyShape", { "bool *" }, "int")
+_FUNCDEF("MXIsNumpyShape", { "int *" }, "int")
 
 --
 
 --- 
 ---@brief set numpy compatibility switch
----@param is_np_shape number @(int) 1 when numpy shape semantics is on, 0 when off
+---@param is_np_shape number @(int) 1 when numpy shape semantics is thread local on,
+---       2 when numpy shape semantics is global on and 0 when off
 ---@param prev number @(int *) returns the previous status before this set
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
@@ -1431,33 +1551,33 @@ _FUNCDEF("MXSetIsNumpyShape", { "int", "int *" }, "int")
 
 --- 
 ---@brief mark NDArrays as variables to compute gradient for autograd
----@param num_var number @(mx_uint) number of variable NDArrays
+---@param num_var number @(uint32_t) number of variable NDArrays
 ---@param var_handles number @(NDArrayHandle *) variable NDArrays
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXAutogradMarkVariables(num_var, var_handles, reqs_array, grad_handles)
     return _CALL("MXAutogradMarkVariables", num_var, var_handles, reqs_array, grad_handles)
 end
-_FUNCDEF("MXAutogradMarkVariables", { "mx_uint", "NDArrayHandle *", "mx_uint *", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXAutogradMarkVariables", { "uint32_t", "NDArrayHandle *", "uint32_t *", "NDArrayHandle *" }, "int")
 
 --
 
 --- 
 ---@brief compute the gradient of outputs w.r.t variabels
----@param num_output number @(mx_uint) number of output NDArray
+---@param num_output number @(uint32_t) number of output NDArray
 ---@param output_handles number @(NDArrayHandle *) output NDArrays
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXAutogradComputeGradient(num_output, output_handles)
     return _CALL("MXAutogradComputeGradient", num_output, output_handles)
 end
-_FUNCDEF("MXAutogradComputeGradient", { "mx_uint", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXAutogradComputeGradient", { "uint32_t", "NDArrayHandle *" }, "int")
 
 --
 
 --- 
 ---@brief compute the gradient of outputs w.r.t variabels
----@param num_output number @(mx_uint) number of output NDArray
+---@param num_output number @(uint32_t) number of output NDArray
 ---@param output_handles number @(NDArrayHandle *) output NDArrays
 ---@param ograd_handles number @(NDArrayHandle *) head gradient for NDArrays
 ---@param retain_graph number @(int) whether to keep the graph after backward
@@ -1466,16 +1586,16 @@ _FUNCDEF("MXAutogradComputeGradient", { "mx_uint", "NDArrayHandle *" }, "int")
 function M.MXAutogradBackward(num_output, output_handles, ograd_handles, retain_graph)
     return _CALL("MXAutogradBackward", num_output, output_handles, ograd_handles, retain_graph)
 end
-_FUNCDEF("MXAutogradBackward", { "mx_uint", "NDArrayHandle *", "NDArrayHandle *", "int" }, "int")
+_FUNCDEF("MXAutogradBackward", { "uint32_t", "NDArrayHandle *", "NDArrayHandle *", "int" }, "int")
 
 --
 
 --- 
 ---@brief compute the gradient of outputs w.r.t variabels
----@param num_output number @(mx_uint) number of output NDArray
+---@param num_output number @(uint32_t) number of output NDArray
 ---@param output_handles number @(NDArrayHandle *) output NDArrays
 ---@param ograd_handles number @(NDArrayHandle *) head gradient for NDArrays
----@param num_variables number @(mx_uint) number of variables
+---@param num_variables number @(uint32_t) number of variables
 ---@param
 ---@param retain_graph number @(int) whether to keep the graph after backward
 ---@param is_train number @(int) whether to do backward for training or inference
@@ -1484,7 +1604,7 @@ _FUNCDEF("MXAutogradBackward", { "mx_uint", "NDArrayHandle *", "NDArrayHandle *"
 function M.MXAutogradBackwardEx(num_output, output_handles, ograd_handles, num_variables, var_handles, retain_graph, create_graph, is_train, grad_handles, grad_stypes)
     return _CALL("MXAutogradBackwardEx", num_output, output_handles, ograd_handles, num_variables, var_handles, retain_graph, create_graph, is_train, grad_handles, grad_stypes)
 end
-_FUNCDEF("MXAutogradBackwardEx", { "mx_uint", "NDArrayHandle *", "NDArrayHandle *", "mx_uint", "NDArrayHandle *", "int", "int", "int", "NDArrayHandle * *", "int * *" }, "int")
+_FUNCDEF("MXAutogradBackwardEx", { "uint32_t", "NDArrayHandle *", "NDArrayHandle *", "uint32_t", "NDArrayHandle *", "int", "int", "int", "NDArrayHandle * *", "int * *" }, "int")
 
 --
 
@@ -1558,28 +1678,38 @@ _FUNCDEF("MXInvokeCachedOpEx", { "CachedOpHandle", "int", "NDArrayHandle *", "in
 --
 
 --- 
+---@brief cached op set monitor callback
+--- 
+function M.MXCachedOpRegisterOpHook(handle, callback, monitor_all)
+    return _CALL("MXCachedOpRegisterOpHook", handle, callback, monitor_all)
+end
+_FUNCDEF("MXCachedOpRegisterOpHook", { "NDArrayHandle", "CachedOpMonitorCallback", "bool" }, "int")
+
+--
+
+--- 
 ---@brief list all the available operator names, include entries.
----@param out_size number @(mx_uint *) the size of returned array
+---@param out_size number @(uint32_t *) the size of returned array
 ---@param out_array number @(const char * * *) the output operator name array.
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXListAllOpNames(out_size, out_array)
     return _CALL("MXListAllOpNames", out_size, out_array)
 end
-_FUNCDEF("MXListAllOpNames", { "mx_uint *", "const char * * *" }, "int")
+_FUNCDEF("MXListAllOpNames", { "uint32_t *", "const char * * *" }, "int")
 
 --
 
 --- 
 ---@brief list all the available AtomicSymbolEntry
----@param out_size number @(mx_uint *) the size of returned array
+---@param out_size number @(uint32_t *) the size of returned array
 ---@param out_array number @(AtomicSymbolCreator * *) the output AtomicSymbolCreator array
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXSymbolListAtomicSymbolCreators(out_size, out_array)
     return _CALL("MXSymbolListAtomicSymbolCreators", out_size, out_array)
 end
-_FUNCDEF("MXSymbolListAtomicSymbolCreators", { "mx_uint *", "AtomicSymbolCreator * *" }, "int")
+_FUNCDEF("MXSymbolListAtomicSymbolCreators", { "uint32_t *", "AtomicSymbolCreator * *" }, "int")
 
 --
 
@@ -1629,29 +1759,29 @@ _FUNCDEF("MXSymbolCutSubgraph", { "SymbolHandle", "SymbolHandle * *", "int *" },
 ---@param creator number @(AtomicSymbolCreator) the AtomicSymbolCreator.
 ---@param name number @(const char * *) The returned name of the creator.
 ---@param description number @(const char * *) The returned description of the symbol.
----@param num_args number @(mx_uint *) Number of arguments.
+---@param num_args number @(uint32_t *) Number of arguments.
 ---@param arg_names number @(const char * * *) Name of the arguments.
 ---@param arg_type_infos number @(const char * * *) Type informations about the arguments.
 ---@param arg_descriptions number @(const char * * *) Description information about the arguments.
 ---@param key_var_num_args number @(const char * *) The keyword argument for specifying variable number of arguments.
----            When this parameter has non-zero length, the function allows variable number
----            of positional arguments, and will need the caller to pass it in in
----            MXSymbolCreateAtomicSymbol,
----            With key = key_var_num_args, and value = number of positional arguments.
+---           When this parameter has non-zero length, the function allows variable number
+---           of positional arguments, and will need the caller to pass it in in
+---           MXSymbolCreateAtomicSymbol,
+---           With key = key_var_num_args, and value = number of positional arguments.
 ---@param return_type number @(const char * *) Return type of the function, can be Symbol or Symbol[]
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXSymbolGetAtomicSymbolInfo(creator, name, description, num_args, arg_names, arg_type_infos, arg_descriptions, key_var_num_args, return_type)
     return _CALL("MXSymbolGetAtomicSymbolInfo", creator, name, description, num_args, arg_names, arg_type_infos, arg_descriptions, key_var_num_args, return_type)
 end
-_FUNCDEF("MXSymbolGetAtomicSymbolInfo", { "AtomicSymbolCreator", "const char * *", "const char * *", "mx_uint *", "const char * * *", "const char * * *", "const char * * *", "const char * *", "const char * *" }, "int")
+_FUNCDEF("MXSymbolGetAtomicSymbolInfo", { "AtomicSymbolCreator", "const char * *", "const char * *", "uint32_t *", "const char * * *", "const char * * *", "const char * * *", "const char * *", "const char * *" }, "int")
 
 --
 
 --- 
 ---@brief Create an AtomicSymbol.
 ---@param creator number @(AtomicSymbolCreator) the AtomicSymbolCreator
----@param num_param number @(mx_uint) the number of parameters
+---@param num_param number @(uint32_t) the number of parameters
 ---@param keys number @(const char * *) the keys to the params
 ---@param vals number @(const char * *) the vals of the params
 ---@param out number @(SymbolHandle *) pointer to the created symbol handle
@@ -1660,7 +1790,7 @@ _FUNCDEF("MXSymbolGetAtomicSymbolInfo", { "AtomicSymbolCreator", "const char * *
 function M.MXSymbolCreateAtomicSymbol(creator, num_param, keys, vals, out)
     return _CALL("MXSymbolCreateAtomicSymbol", creator, num_param, keys, vals, out)
 end
-_FUNCDEF("MXSymbolCreateAtomicSymbol", { "AtomicSymbolCreator", "mx_uint", "const char * *", "const char * *", "SymbolHandle *" }, "int")
+_FUNCDEF("MXSymbolCreateAtomicSymbol", { "AtomicSymbolCreator", "uint32_t", "const char * *", "const char * *", "SymbolHandle *" }, "int")
 
 --
 
@@ -1679,7 +1809,7 @@ _FUNCDEF("MXSymbolCreateVariable", { "const char *", "SymbolHandle *" }, "int")
 
 --- 
 ---@brief Create a Symbol by grouping list of symbols together
----@param num_symbols number @(mx_uint) number of symbols to be grouped
+---@param num_symbols number @(uint32_t) number of symbols to be grouped
 ---@param symbols number @(SymbolHandle *) array of symbol handles
 ---@param out number @(SymbolHandle *) pointer to the created symbol handle
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -1687,7 +1817,7 @@ _FUNCDEF("MXSymbolCreateVariable", { "const char *", "SymbolHandle *" }, "int")
 function M.MXSymbolCreateGroup(num_symbols, symbols, out)
     return _CALL("MXSymbolCreateGroup", num_symbols, symbols, out)
 end
-_FUNCDEF("MXSymbolCreateGroup", { "mx_uint", "SymbolHandle *", "SymbolHandle *" }, "int")
+_FUNCDEF("MXSymbolCreateGroup", { "uint32_t", "SymbolHandle *", "SymbolHandle *" }, "int")
 
 --
 
@@ -1825,14 +1955,14 @@ _FUNCDEF("MXSymbolGetAttr", { "SymbolHandle", "const char *", "const char * *", 
 
 --- 
 ---@brief Set string attribute from symbol.
----  NOTE: Setting attribute to a symbol can affect the semantics(mutable/immutable) of symbolic graph.
+--- NOTE: Setting attribute to a symbol can affect the semantics(mutable/immutable) of symbolic graph.
 --- 
----  Safe recommendaton: use  immutable graph
----  - Only allow set attributes during creation of new symbol as optional parameter
+--- Safe recommendaton: use  immutable graph
+--- - Only allow set attributes during creation of new symbol as optional parameter
 --- 
----  Mutable graph (be careful about the semantics):
----  - Allow set attr at any point.
----  - Mutating an attribute of some common node of two graphs can cause confusion from user.
+--- Mutable graph (be careful about the semantics):
+--- - Allow set attr at any point.
+--- - Mutating an attribute of some common node of two graphs can cause confusion from user.
 --- 
 ---@param symbol number @(SymbolHandle) the source symbol
 ---@param key string @(const char *) The key of the symbol.
@@ -1849,56 +1979,56 @@ _FUNCDEF("MXSymbolSetAttr", { "SymbolHandle", "const char *", "const char *" }, 
 --- 
 ---@brief Get all attributes from symbol, including all descendents.
 ---@param symbol number @(SymbolHandle) the source symbol
----@param out_size number @(mx_uint *) The number of output attributes
+---@param out_size number @(uint32_t *) The number of output attributes
 ---@param out number @(const char * * *) 2*out_size strings representing key value pairs.
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXSymbolListAttr(symbol, out_size, out)
     return _CALL("MXSymbolListAttr", symbol, out_size, out)
 end
-_FUNCDEF("MXSymbolListAttr", { "SymbolHandle", "mx_uint *", "const char * * *" }, "int")
+_FUNCDEF("MXSymbolListAttr", { "SymbolHandle", "uint32_t *", "const char * * *" }, "int")
 
 --
 
 --- 
 ---@brief Get all attributes from symbol, excluding descendents.
 ---@param symbol number @(SymbolHandle) the source symbol
----@param out_size number @(mx_uint *) The number of output attributes
+---@param out_size number @(uint32_t *) The number of output attributes
 ---@param out number @(const char * * *) 2*out_size strings representing key value pairs.
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXSymbolListAttrShallow(symbol, out_size, out)
     return _CALL("MXSymbolListAttrShallow", symbol, out_size, out)
 end
-_FUNCDEF("MXSymbolListAttrShallow", { "SymbolHandle", "mx_uint *", "const char * * *" }, "int")
+_FUNCDEF("MXSymbolListAttrShallow", { "SymbolHandle", "uint32_t *", "const char * * *" }, "int")
 
 --
 
 --- 
 ---@brief List arguments in the symbol.
 ---@param symbol number @(SymbolHandle) the symbol
----@param out_size number @(mx_uint *) output size
+---@param out_size number @(uint32_t *) output size
 ---@param out_str_array number @(const char * * *) pointer to hold the output string array
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXSymbolListArguments(symbol, out_size, out_str_array)
     return _CALL("MXSymbolListArguments", symbol, out_size, out_str_array)
 end
-_FUNCDEF("MXSymbolListArguments", { "SymbolHandle", "mx_uint *", "const char * * *" }, "int")
+_FUNCDEF("MXSymbolListArguments", { "SymbolHandle", "uint32_t *", "const char * * *" }, "int")
 
 --
 
 --- 
 ---@brief List returns in the symbol.
 ---@param symbol number @(SymbolHandle) the symbol
----@param out_size number @(mx_uint *) output size
+---@param out_size number @(uint32_t *) output size
 ---@param out_str_array number @(const char * * *) pointer to hold the output string array
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXSymbolListOutputs(symbol, out_size, out_str_array)
     return _CALL("MXSymbolListOutputs", symbol, out_size, out_str_array)
 end
-_FUNCDEF("MXSymbolListOutputs", { "SymbolHandle", "mx_uint *", "const char * * *" }, "int")
+_FUNCDEF("MXSymbolListOutputs", { "SymbolHandle", "uint32_t *", "const char * * *" }, "int")
 
 --
 
@@ -1911,7 +2041,7 @@ _FUNCDEF("MXSymbolListOutputs", { "SymbolHandle", "mx_uint *", "const char * * *
 function M.MXSymbolGetNumOutputs(symbol, output_count)
     return _CALL("MXSymbolGetNumOutputs", symbol, output_count)
 end
-_FUNCDEF("MXSymbolGetNumOutputs", { "SymbolHandle", "mx_uint *" }, "int")
+_FUNCDEF("MXSymbolGetNumOutputs", { "SymbolHandle", "uint32_t *" }, "int")
 
 --
 
@@ -1944,41 +2074,41 @@ _FUNCDEF("MXSymbolGetChildren", { "SymbolHandle", "SymbolHandle *" }, "int")
 --- 
 ---@brief Get index-th outputs of the symbol.
 ---@param symbol number @(SymbolHandle) The symbol
----@param index number @(mx_uint) the Index of the output.
+---@param index number @(uint32_t) the Index of the output.
 ---@param out number @(SymbolHandle *) The output symbol whose outputs are the index-th symbol.
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXSymbolGetOutput(symbol, index, out)
     return _CALL("MXSymbolGetOutput", symbol, index, out)
 end
-_FUNCDEF("MXSymbolGetOutput", { "SymbolHandle", "mx_uint", "SymbolHandle *" }, "int")
+_FUNCDEF("MXSymbolGetOutput", { "SymbolHandle", "uint32_t", "SymbolHandle *" }, "int")
 
 --
 
 --- 
 ---@brief List auxiliary states in the symbol.
 ---@param symbol number @(SymbolHandle) the symbol
----@param out_size number @(mx_uint *) output size
+---@param out_size number @(uint32_t *) output size
 ---@param out_str_array number @(const char * * *) pointer to hold the output string array
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXSymbolListAuxiliaryStates(symbol, out_size, out_str_array)
     return _CALL("MXSymbolListAuxiliaryStates", symbol, out_size, out_str_array)
 end
-_FUNCDEF("MXSymbolListAuxiliaryStates", { "SymbolHandle", "mx_uint *", "const char * * *" }, "int")
+_FUNCDEF("MXSymbolListAuxiliaryStates", { "SymbolHandle", "uint32_t *", "const char * * *" }, "int")
 
 --
 
 --- 
 ---@brief Compose the symbol on other symbols.
 --- 
----  This function will change the sym hanlde.
----  To achieve function apply behavior, copy the symbol first
----  before apply.
+--- This function will change the sym hanlde.
+--- To achieve function apply behavior, copy the symbol first
+--- before apply.
 --- 
 ---@param sym number @(SymbolHandle) the symbol to apply
 ---@param name string @(const char *) the name of symbol
----@param num_args number @(mx_uint) number of arguments
+---@param num_args number @(uint32_t) number of arguments
 ---@param keys number @(const char * *) the key of keyword args (optional)
 ---@param args number @(SymbolHandle *) arguments to sym
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -1986,7 +2116,7 @@ _FUNCDEF("MXSymbolListAuxiliaryStates", { "SymbolHandle", "mx_uint *", "const ch
 function M.MXSymbolCompose(sym, name, num_args, keys, args)
     return _CALL("MXSymbolCompose", sym, name, num_args, keys, args)
 end
-_FUNCDEF("MXSymbolCompose", { "SymbolHandle", "const char *", "mx_uint", "const char * *", "SymbolHandle *" }, "int")
+_FUNCDEF("MXSymbolCompose", { "SymbolHandle", "const char *", "uint32_t", "const char * *", "SymbolHandle *" }, "int")
 
 --
 
@@ -1994,7 +2124,7 @@ _FUNCDEF("MXSymbolCompose", { "SymbolHandle", "const char *", "mx_uint", "const 
 ---@brief Get the gradient graph of the symbol
 --- 
 ---@param sym number @(SymbolHandle) the symbol to get gradient
----@param num_wrt number @(mx_uint) number of arguments to get gradient
+---@param num_wrt number @(uint32_t) number of arguments to get gradient
 ---@param wrt number @(const char * *) the name of the arguments to get gradient
 ---@param out number @(SymbolHandle *) the returned symbol that has gradient
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -2002,57 +2132,80 @@ _FUNCDEF("MXSymbolCompose", { "SymbolHandle", "const char *", "mx_uint", "const 
 function M.MXSymbolGrad(sym, num_wrt, wrt, out)
     return _CALL("MXSymbolGrad", sym, num_wrt, wrt, out)
 end
-_FUNCDEF("MXSymbolGrad", { "SymbolHandle", "mx_uint", "const char * *", "SymbolHandle *" }, "int")
+_FUNCDEF("MXSymbolGrad", { "SymbolHandle", "uint32_t", "const char * *", "SymbolHandle *" }, "int")
 
 --
 
 --- 
 ---@brief DEPRECATED. Use MXSymbolInferShapeEx instead.
 --- infer shape of unknown input shapes given the known one.
----  The shapes are packed into a CSR matrix represented by arg_ind_ptr and arg_shape_data
----  The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
+--- The shapes are packed into a CSR matrix represented by arg_ind_ptr and arg_shape_data
+--- The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
 --- 
 ---@param sym number @(SymbolHandle) symbol handle
----@param num_args number @(mx_uint) numbe of input arguments.
+---@param num_args number @(uint32_t) numbe of input arguments.
 ---@param keys number @(const char * *) the key of keyword args (optional)
----@param arg_ind_ptr number @(const mx_uint *) the head pointer of the rows in CSR
----@param arg_shape_data number @(const mx_uint *) the content of the CSR
----@param in_shape_size number @(mx_uint *) sizeof the returning array of in_shapes
----@param in_shape_ndim number @(const mx_uint * *) returning array of shape dimensions of eachs input shape.
----@param in_shape_data number @(const mx_uint * * *) returning array of pointers to head of the input shape.
----@param out_shape_size number @(mx_uint *) sizeof the returning array of out_shapes
----@param out_shape_ndim number @(const mx_uint * *) returning array of shape dimensions of eachs input shape.
----@param out_shape_data number @(const mx_uint * * *) returning array of pointers to head of the input shape.
----@param aux_shape_size number @(mx_uint *) sizeof the returning array of aux_shapes
----@param aux_shape_ndim number @(const mx_uint * *) returning array of shape dimensions of eachs auxiliary shape.
----@param aux_shape_data number @(const mx_uint * * *) returning array of pointers to head of the auxiliary shape.
+---@param arg_ind_ptr number @(const uint32_t *) the head pointer of the rows in CSR
+---@param arg_shape_data number @(const uint32_t *) the content of the CSR
+---@param in_shape_size number @(uint32_t *) sizeof the returning array of in_shapes
+---@param in_shape_ndim number @(const uint32_t * *) returning array of shape dimensions of eachs input shape.
+---@param in_shape_data number @(const uint32_t * * *) returning array of pointers to head of the input shape.
+---@param out_shape_size number @(uint32_t *) sizeof the returning array of out_shapes
+---@param out_shape_ndim number @(const uint32_t * *) returning array of shape dimensions of eachs input shape.
+---@param out_shape_data number @(const uint32_t * * *) returning array of pointers to head of the input shape.
+---@param aux_shape_size number @(uint32_t *) sizeof the returning array of aux_shapes
+---@param aux_shape_ndim number @(const uint32_t * *) returning array of shape dimensions of eachs auxiliary shape.
+---@param aux_shape_data number @(const uint32_t * * *) returning array of pointers to head of the auxiliary shape.
 ---@param complete number @(int *) whether infer shape completes or more information is needed.
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXSymbolInferShape(sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
     return _CALL("MXSymbolInferShape", sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
 end
-_FUNCDEF("MXSymbolInferShape", { "SymbolHandle", "mx_uint", "const char * *", "const mx_uint *", "const mx_uint *", "mx_uint *", "const mx_uint * *", "const mx_uint * * *", "mx_uint *", "const mx_uint * *", "const mx_uint * * *", "mx_uint *", "const mx_uint * *", "const mx_uint * * *", "int *" }, "int")
+_FUNCDEF("MXSymbolInferShape", { "SymbolHandle", "uint32_t", "const char * *", "const uint32_t *", "const uint32_t *", "uint32_t *", "const uint32_t * *", "const uint32_t * * *", "uint32_t *", "const uint32_t * *", "const uint32_t * * *", "uint32_t *", "const uint32_t * *", "const uint32_t * * *", "int *" }, "int")
+
+--
+
+---@param sym number @(SymbolHandle)
+---@param num_args number @(uint32_t)
+---@param keys number @(const char * *)
+---@param arg_ind_ptr number @(const int64_t *)
+---@param arg_shape_data number @(const int64_t *)
+---@param in_shape_size number @(size_t *)
+---@param in_shape_ndim number @(const int * *)
+---@param in_shape_data number @(const int64_t * * *)
+---@param out_shape_size number @(size_t *)
+---@param out_shape_ndim number @(const int * *)
+---@param out_shape_data number @(const int64_t * * *)
+---@param aux_shape_size number @(size_t *)
+---@param aux_shape_ndim number @(const int * *)
+---@param aux_shape_data number @(const int64_t * * *)
+---@param complete number @(int *)
+---@return number @(int)
+function M.MXSymbolInferShape64(sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
+    return _CALL("MXSymbolInferShape64", sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
+end
+_FUNCDEF("MXSymbolInferShape64", { "SymbolHandle", "uint32_t", "const char * *", "const int64_t *", "const int64_t *", "size_t *", "const int * *", "const int64_t * * *", "size_t *", "const int * *", "const int64_t * * *", "size_t *", "const int * *", "const int64_t * * *", "int *" }, "int")
 
 --
 
 --- 
 ---@brief infer shape of unknown input shapes given the known one.
----  The shapes are packed into a CSR matrix represented by arg_ind_ptr and arg_shape_data
----  The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
+--- The shapes are packed into a CSR matrix represented by arg_ind_ptr and arg_shape_data
+--- The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
 --- 
 ---@param sym number @(SymbolHandle) symbol handle
----@param num_args number @(mx_uint) numbe of input arguments.
+---@param num_args number @(uint32_t) numbe of input arguments.
 ---@param keys number @(const char * *) the key of keyword args (optional)
----@param arg_ind_ptr number @(const mx_uint *) the head pointer of the rows in CSR
+---@param arg_ind_ptr number @(const uint32_t *) the head pointer of the rows in CSR
 ---@param arg_shape_data number @(const int *) the content of the CSR
----@param in_shape_size number @(mx_uint *) sizeof the returning array of in_shapes
+---@param in_shape_size number @(uint32_t *) sizeof the returning array of in_shapes
 ---@param in_shape_ndim number @(const int * *) returning array of shape dimensions of eachs input shape.
 ---@param in_shape_data number @(const int * * *) returning array of pointers to head of the input shape.
----@param out_shape_size number @(mx_uint *) sizeof the returning array of out_shapes
+---@param out_shape_size number @(uint32_t *) sizeof the returning array of out_shapes
 ---@param out_shape_ndim number @(const int * *) returning array of shape dimensions of eachs input shape.
 ---@param out_shape_data number @(const int * * *) returning array of pointers to head of the input shape.
----@param aux_shape_size number @(mx_uint *) sizeof the returning array of aux_shapes
+---@param aux_shape_size number @(uint32_t *) sizeof the returning array of aux_shapes
 ---@param aux_shape_ndim number @(const int * *) returning array of shape dimensions of eachs auxiliary shape.
 ---@param aux_shape_data number @(const int * * *) returning array of pointers to head of the auxiliary shape.
 ---@param complete number @(int *) whether infer shape completes or more information is needed.
@@ -2061,7 +2214,30 @@ _FUNCDEF("MXSymbolInferShape", { "SymbolHandle", "mx_uint", "const char * *", "c
 function M.MXSymbolInferShapeEx(sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
     return _CALL("MXSymbolInferShapeEx", sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
 end
-_FUNCDEF("MXSymbolInferShapeEx", { "SymbolHandle", "mx_uint", "const char * *", "const mx_uint *", "const int *", "mx_uint *", "const int * *", "const int * * *", "mx_uint *", "const int * *", "const int * * *", "mx_uint *", "const int * *", "const int * * *", "int *" }, "int")
+_FUNCDEF("MXSymbolInferShapeEx", { "SymbolHandle", "uint32_t", "const char * *", "const uint32_t *", "const int *", "uint32_t *", "const int * *", "const int * * *", "uint32_t *", "const int * *", "const int * * *", "uint32_t *", "const int * *", "const int * * *", "int *" }, "int")
+
+--
+
+---@param sym number @(SymbolHandle)
+---@param num_args number @(uint32_t)
+---@param keys number @(const char * *)
+---@param arg_ind_ptr number @(const int64_t *)
+---@param arg_shape_data number @(const int64_t *)
+---@param in_shape_size number @(size_t *)
+---@param in_shape_ndim number @(const int * *)
+---@param in_shape_data number @(const int64_t * * *)
+---@param out_shape_size number @(size_t *)
+---@param out_shape_ndim number @(const int * *)
+---@param out_shape_data number @(const int64_t * * *)
+---@param aux_shape_size number @(size_t *)
+---@param aux_shape_ndim number @(const int * *)
+---@param aux_shape_data number @(const int64_t * * *)
+---@param complete number @(int *)
+---@return number @(int)
+function M.MXSymbolInferShapeEx64(sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
+    return _CALL("MXSymbolInferShapeEx64", sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
+end
+_FUNCDEF("MXSymbolInferShapeEx64", { "SymbolHandle", "uint32_t", "const char * *", "const int64_t *", "const int64_t *", "size_t *", "const int * *", "const int64_t * * *", "size_t *", "const int * *", "const int64_t * * *", "size_t *", "const int * *", "const int64_t * * *", "int *" }, "int")
 
 --
 
@@ -2069,53 +2245,76 @@ _FUNCDEF("MXSymbolInferShapeEx", { "SymbolHandle", "mx_uint", "const char * *", 
 ---@brief DEPRECATED. Use MXSymbolInferShapePartialEx instead.
 --- partially infer shape of unknown input shapes given the known one.
 --- 
----  Return partially inferred results if not all shapes could be inferred.
----  The shapes are packed into a CSR matrix represented by arg_ind_ptr and arg_shape_data
----  The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
+--- Return partially inferred results if not all shapes could be inferred.
+--- The shapes are packed into a CSR matrix represented by arg_ind_ptr and arg_shape_data
+--- The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
 --- 
 ---@param sym number @(SymbolHandle) symbol handle
----@param num_args number @(mx_uint) numbe of input arguments.
+---@param num_args number @(uint32_t) numbe of input arguments.
 ---@param keys number @(const char * *) the key of keyword args (optional)
----@param arg_ind_ptr number @(const mx_uint *) the head pointer of the rows in CSR
----@param arg_shape_data number @(const mx_uint *) the content of the CSR
----@param in_shape_size number @(mx_uint *) sizeof the returning array of in_shapes
----@param in_shape_ndim number @(const mx_uint * *) returning array of shape dimensions of eachs input shape.
----@param in_shape_data number @(const mx_uint * * *) returning array of pointers to head of the input shape.
----@param out_shape_size number @(mx_uint *) sizeof the returning array of out_shapes
----@param out_shape_ndim number @(const mx_uint * *) returning array of shape dimensions of eachs input shape.
----@param out_shape_data number @(const mx_uint * * *) returning array of pointers to head of the input shape.
----@param aux_shape_size number @(mx_uint *) sizeof the returning array of aux_shapes
----@param aux_shape_ndim number @(const mx_uint * *) returning array of shape dimensions of eachs auxiliary shape.
----@param aux_shape_data number @(const mx_uint * * *) returning array of pointers to head of the auxiliary shape.
+---@param arg_ind_ptr number @(const uint32_t *) the head pointer of the rows in CSR
+---@param arg_shape_data number @(const uint32_t *) the content of the CSR
+---@param in_shape_size number @(uint32_t *) sizeof the returning array of in_shapes
+---@param in_shape_ndim number @(const uint32_t * *) returning array of shape dimensions of eachs input shape.
+---@param in_shape_data number @(const uint32_t * * *) returning array of pointers to head of the input shape.
+---@param out_shape_size number @(uint32_t *) sizeof the returning array of out_shapes
+---@param out_shape_ndim number @(const uint32_t * *) returning array of shape dimensions of eachs input shape.
+---@param out_shape_data number @(const uint32_t * * *) returning array of pointers to head of the input shape.
+---@param aux_shape_size number @(uint32_t *) sizeof the returning array of aux_shapes
+---@param aux_shape_ndim number @(const uint32_t * *) returning array of shape dimensions of eachs auxiliary shape.
+---@param aux_shape_data number @(const uint32_t * * *) returning array of pointers to head of the auxiliary shape.
 ---@param complete number @(int *) whether infer shape completes or more information is needed.
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXSymbolInferShapePartial(sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
     return _CALL("MXSymbolInferShapePartial", sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
 end
-_FUNCDEF("MXSymbolInferShapePartial", { "SymbolHandle", "mx_uint", "const char * *", "const mx_uint *", "const mx_uint *", "mx_uint *", "const mx_uint * *", "const mx_uint * * *", "mx_uint *", "const mx_uint * *", "const mx_uint * * *", "mx_uint *", "const mx_uint * *", "const mx_uint * * *", "int *" }, "int")
+_FUNCDEF("MXSymbolInferShapePartial", { "SymbolHandle", "uint32_t", "const char * *", "const uint32_t *", "const uint32_t *", "uint32_t *", "const uint32_t * *", "const uint32_t * * *", "uint32_t *", "const uint32_t * *", "const uint32_t * * *", "uint32_t *", "const uint32_t * *", "const uint32_t * * *", "int *" }, "int")
+
+--
+
+---@param sym number @(SymbolHandle)
+---@param num_args number @(uint32_t)
+---@param keys number @(const char * *)
+---@param arg_ind_ptr number @(const int64_t *)
+---@param arg_shape_data number @(const int64_t *)
+---@param in_shape_size number @(size_t *)
+---@param in_shape_ndim number @(const int * *)
+---@param in_shape_data number @(const int64_t * * *)
+---@param out_shape_size number @(size_t *)
+---@param out_shape_ndim number @(const int * *)
+---@param out_shape_data number @(const int64_t * * *)
+---@param aux_shape_size number @(size_t *)
+---@param aux_shape_ndim number @(const int * *)
+---@param aux_shape_data number @(const int64_t * * *)
+---@param complete number @(int *)
+---@return number @(int)
+function M.MXSymbolInferShapePartial64(sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
+    return _CALL("MXSymbolInferShapePartial64", sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
+end
+_FUNCDEF("MXSymbolInferShapePartial64", { "SymbolHandle", "uint32_t", "const char * *", "const int64_t *", "const int64_t *", "size_t *", "const int * *", "const int64_t * * *", "size_t *", "const int * *", "const int64_t * * *", "size_t *", "const int * *", "const int64_t * * *", "int *" }, "int")
 
 --
 
 --- 
 ---@brief partially infer shape of unknown input shapes given the known one.
 --- 
----  Return partially inferred results if not all shapes could be inferred.
----  The shapes are packed into a CSR matrix represented by arg_ind_ptr and arg_shape_data
----  The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
+--- Return partially inferred results if not all shapes could be inferred.
+--- The shapes are packed into a CSR matrix represented by arg_ind_ptr and arg_shape_data
+--- The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
 --- 
 ---@param sym number @(SymbolHandle) symbol handle
----@param num_args number @(mx_uint) numbe of input arguments.
+---@param num_args number @(uint32_t) numbe of input arguments.
 ---@param keys number @(const char * *) the key of keyword args (optional)
----@param arg_ind_ptr number @(const mx_uint *) the head pointer of the rows in CSR
+---@param arg_ind_ptr number @(const uint32_t *) the head pointer of the rows in CSR
 ---@param arg_shape_data number @(const int *) the content of the CSR
----@param in_shape_size number @(mx_uint *) sizeof the returning array of in_shapes
+---@param in_shape_size number @(uint32_t *) sizeof the returning array of in_shapes
 ---@param in_shape_ndim number @(const int * *) returning array of shape dimensions of eachs input shape.
 ---@param in_shape_data number @(const int * * *) returning array of pointers to head of the input shape.
----@param out_shape_size number @(mx_uint *) sizeof the returning array of out_shapes
+---@param out_shape_size number @(uint32_t *) sizeof the returning array of out_shapes
 ---@param out_shape_ndim number @(const int * *) returning array of shape dimensions of eachs input shape.
 ---@param out_shape_data number @(const int * * *) returning array of pointers to head of the input shape.
----@param aux_shape_size number @(mx_uint *) sizeof the returning array of aux_shapes
+---@param aux_shape_size number @(uint32_t *) sizeof the returning array of aux_shapes
 ---@param aux_shape_ndim number @(const int * *) returning array of shape dimensions of eachs auxiliary shape.
 ---@param aux_shape_data number @(const int * * *) returning array of pointers to head of the auxiliary shape.
 ---@param complete number @(int *) whether infer shape completes or more information is needed.
@@ -2124,24 +2323,47 @@ _FUNCDEF("MXSymbolInferShapePartial", { "SymbolHandle", "mx_uint", "const char *
 function M.MXSymbolInferShapePartialEx(sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
     return _CALL("MXSymbolInferShapePartialEx", sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
 end
-_FUNCDEF("MXSymbolInferShapePartialEx", { "SymbolHandle", "mx_uint", "const char * *", "const mx_uint *", "const int *", "mx_uint *", "const int * *", "const int * * *", "mx_uint *", "const int * *", "const int * * *", "mx_uint *", "const int * *", "const int * * *", "int *" }, "int")
+_FUNCDEF("MXSymbolInferShapePartialEx", { "SymbolHandle", "uint32_t", "const char * *", "const uint32_t *", "const int *", "uint32_t *", "const int * *", "const int * * *", "uint32_t *", "const int * *", "const int * * *", "uint32_t *", "const int * *", "const int * * *", "int *" }, "int")
+
+--
+
+---@param sym number @(SymbolHandle)
+---@param num_args number @(uint32_t)
+---@param keys number @(const char * *)
+---@param arg_ind_ptr number @(const int64_t *)
+---@param arg_shape_data number @(const int64_t *)
+---@param in_shape_size number @(size_t *)
+---@param in_shape_ndim number @(const int * *)
+---@param in_shape_data number @(const int64_t * * *)
+---@param out_shape_size number @(size_t *)
+---@param out_shape_ndim number @(const int * *)
+---@param out_shape_data number @(const int64_t * * *)
+---@param aux_shape_size number @(size_t *)
+---@param aux_shape_ndim number @(const int * *)
+---@param aux_shape_data number @(const int64_t * * *)
+---@param complete number @(int *)
+---@return number @(int)
+function M.MXSymbolInferShapePartialEx64(sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
+    return _CALL("MXSymbolInferShapePartialEx64", sym, num_args, keys, arg_ind_ptr, arg_shape_data, in_shape_size, in_shape_ndim, in_shape_data, out_shape_size, out_shape_ndim, out_shape_data, aux_shape_size, aux_shape_ndim, aux_shape_data, complete)
+end
+_FUNCDEF("MXSymbolInferShapePartialEx64", { "SymbolHandle", "uint32_t", "const char * *", "const int64_t *", "const int64_t *", "size_t *", "const int * *", "const int64_t * * *", "size_t *", "const int * *", "const int64_t * * *", "size_t *", "const int * *", "const int64_t * * *", "int *" }, "int")
 
 --
 
 --- 
 ---@brief infer type of unknown input types given the known one.
----  The types are packed into a CSR matrix represented by arg_ind_ptr and arg_type_data
----  The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
+--- The types are packed into a CSR matrix represented by arg_ind_ptr and arg_type_data
+--- The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
 --- 
 ---@param sym number @(SymbolHandle) symbol handle
----@param num_args number @(mx_uint) numbe of input arguments.
+---@param num_args number @(uint32_t) numbe of input arguments.
 ---@param keys number @(const char * *) the key of keyword args (optional)
 ---@param arg_type_data number @(const int *) the content of the CSR
----@param in_type_size number @(mx_uint *) sizeof the returning array of in_types
+---@param in_type_size number @(uint32_t *) sizeof the returning array of in_types
 ---@param in_type_data number @(const int * *) returning array of pointers to head of the input type.
----@param out_type_size number @(mx_uint *) sizeof the returning array of out_types
+---@param out_type_size number @(uint32_t *) sizeof the returning array of out_types
 ---@param out_type_data number @(const int * *) returning array of pointers to head of the input type.
----@param aux_type_size number @(mx_uint *) sizeof the returning array of aux_types
+---@param aux_type_size number @(uint32_t *) sizeof the returning array of aux_types
 ---@param aux_type_data number @(const int * *) returning array of pointers to head of the auxiliary type.
 ---@param complete number @(int *) whether infer type completes or more information is needed.
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -2149,26 +2371,26 @@ _FUNCDEF("MXSymbolInferShapePartialEx", { "SymbolHandle", "mx_uint", "const char
 function M.MXSymbolInferType(sym, num_args, keys, arg_type_data, in_type_size, in_type_data, out_type_size, out_type_data, aux_type_size, aux_type_data, complete)
     return _CALL("MXSymbolInferType", sym, num_args, keys, arg_type_data, in_type_size, in_type_data, out_type_size, out_type_data, aux_type_size, aux_type_data, complete)
 end
-_FUNCDEF("MXSymbolInferType", { "SymbolHandle", "mx_uint", "const char * *", "const int *", "mx_uint *", "const int * *", "mx_uint *", "const int * *", "mx_uint *", "const int * *", "int *" }, "int")
+_FUNCDEF("MXSymbolInferType", { "SymbolHandle", "uint32_t", "const char * *", "const int *", "uint32_t *", "const int * *", "uint32_t *", "const int * *", "uint32_t *", "const int * *", "int *" }, "int")
 
 --
 
 --- 
 ---@brief partially infer type of unknown input types given the known one.
 --- 
----  Return partially inferred results if not all types could be inferred.
----  The types are packed into a CSR matrix represented by arg_ind_ptr and arg_type_data
----  The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
+--- Return partially inferred results if not all types could be inferred.
+--- The types are packed into a CSR matrix represented by arg_ind_ptr and arg_type_data
+--- The call will be treated as a kwargs call if key != nullptr or num_args==0, otherwise it is positional.
 --- 
 ---@param sym number @(SymbolHandle) symbol handle
----@param num_args number @(mx_uint) numbe of input arguments.
+---@param num_args number @(uint32_t) numbe of input arguments.
 ---@param keys number @(const char * *) the key of keyword args (optional)
 ---@param arg_type_data number @(const int *) the content of the CSR
----@param in_type_size number @(mx_uint *) sizeof the returning array of in_types
+---@param in_type_size number @(uint32_t *) sizeof the returning array of in_types
 ---@param in_type_data number @(const int * *) returning array of pointers to head of the input type.
----@param out_type_size number @(mx_uint *) sizeof the returning array of out_types
+---@param out_type_size number @(uint32_t *) sizeof the returning array of out_types
 ---@param out_type_data number @(const int * *) returning array of pointers to head of the input type.
----@param aux_type_size number @(mx_uint *) sizeof the returning array of aux_types
+---@param aux_type_size number @(uint32_t *) sizeof the returning array of aux_types
 ---@param aux_type_data number @(const int * *) returning array of pointers to head of the auxiliary type.
 ---@param complete number @(int *) whether infer type completes or more information is needed.
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -2176,7 +2398,7 @@ _FUNCDEF("MXSymbolInferType", { "SymbolHandle", "mx_uint", "const char * *", "co
 function M.MXSymbolInferTypePartial(sym, num_args, keys, arg_type_data, in_type_size, in_type_data, out_type_size, out_type_data, aux_type_size, aux_type_data, complete)
     return _CALL("MXSymbolInferTypePartial", sym, num_args, keys, arg_type_data, in_type_size, in_type_data, out_type_size, out_type_data, aux_type_size, aux_type_data, complete)
 end
-_FUNCDEF("MXSymbolInferTypePartial", { "SymbolHandle", "mx_uint", "const char * *", "const int *", "mx_uint *", "const int * *", "mx_uint *", "const int * *", "mx_uint *", "const int * *", "int *" }, "int")
+_FUNCDEF("MXSymbolInferTypePartial", { "SymbolHandle", "uint32_t", "const char * *", "const int *", "uint32_t *", "const int * *", "uint32_t *", "const int * *", "uint32_t *", "const int * *", "int *" }, "int")
 
 --
 
@@ -2184,33 +2406,72 @@ _FUNCDEF("MXSymbolInferTypePartial", { "SymbolHandle", "mx_uint", "const char * 
 ---@brief Convert a symbol into a quantized symbol where FP32 operators are replaced with INT8
 ---@param sym_handle number @(SymbolHandle) symbol to be converted
 ---@param ret_sym_handle number @(SymbolHandle *) quantized symbol result
----@param num_excluded_symbols number @(const mx_uint) number of layers excluded from being quantized in the input symbol
----@param excluded_symbols number @(const char * *) op names to be excluded from being quantized
----@param num_offline number @(const mx_uint) number of parameters that are quantized offline
+---@param dev_type number @(const int *) device type
+---@param num_excluded_sym_names number @(const uint32_t) number of layers excluded from being quantized in the input symbol
+---@param excluded_sym_names number @(const char * *) node names to be excluded from being quantized
+---@param num_excluded_op_names number @(const uint32_t) number of operators excluded from being quantized in the input symbol
+---@param excluded_op_names number @(const char * *) operator names to be excluded from being quantized
+---@param num_offline number @(const uint32_t) number of parameters that are quantized offline
 ---@param offline_params number @(const char * *) array of c strings representing the names of params quantized offline
 ---@param quantized_dtype string @(const char *) the quantized destination type for input data
 ---@param calib_quantize boolean @(const bool) **Deprecated**. quantize op will always be calibrated if could
+---@param quantize_mode string @(const char *) quantize mode to be used in quantize pass
+---@param out_num_calib_names number @(uint32_t *) return the number of nodes to be calibrated
+---@param out_calib_names number @(const char * * *) return the node names to be calibrated
 --- 
-function M.MXQuantizeSymbol(sym_handle, ret_sym_handle, num_excluded_symbols, excluded_symbols, num_offline, offline_params, quantized_dtype, calib_quantize)
-    return _CALL("MXQuantizeSymbol", sym_handle, ret_sym_handle, num_excluded_symbols, excluded_symbols, num_offline, offline_params, quantized_dtype, calib_quantize)
+function M.MXQuantizeSymbol(sym_handle, ret_sym_handle, dev_type, num_excluded_sym_names, excluded_sym_names, num_excluded_op_names, excluded_op_names, num_offline, offline_params, quantized_dtype, calib_quantize, quantize_mode, out_num_calib_names, out_calib_names)
+    return _CALL("MXQuantizeSymbol", sym_handle, ret_sym_handle, dev_type, num_excluded_sym_names, excluded_sym_names, num_excluded_op_names, excluded_op_names, num_offline, offline_params, quantized_dtype, calib_quantize, quantize_mode, out_num_calib_names, out_calib_names)
 end
-_FUNCDEF("MXQuantizeSymbol", { "SymbolHandle", "SymbolHandle *", "const mx_uint", "const char * *", "const mx_uint", "const char * *", "const char *", "const bool" }, "int")
+_FUNCDEF("MXQuantizeSymbol", { "SymbolHandle", "SymbolHandle *", "const int *", "const uint32_t", "const char * *", "const uint32_t", "const char * *", "const uint32_t", "const char * *", "const char *", "const bool", "const char *", "uint32_t *", "const char * * *" }, "int")
+
+--
+
+--- 
+---@brief Convert a symbol into a mixed precision symbol with cast operators for target dtype casting
+---@param sym_handle number @(SymbolHandle) symbol to be converted
+---@param ret_sym_handle number @(SymbolHandle *) mixed precision symbol result
+---@param num_args number @(uint32_t) number of arguments for known dtypes
+---@param arg_type_data number @(const int *) arg types of the arguments
+---@param target_dtype number @(const int *) target_dtype for mixed precision symbol
+---@param cast_optional_params number @(const int) whether to cast optional params to target_dtype
+---@param num_target_dtype_op_names number @(const uint32_t) number of ops to be casted to target_dtype
+---@param num_fp32_op_names number @(const uint32_t) number of ops to be casted to FP32
+---@param num_widest_dtype_op_names number @(const uint32_t) number of ops to be casted to widest dtype
+---@param num_conditional_fp32_op_names number @(const uint32_t) number of ops to be casted to FP32 based on a condition
+---@param num_excluded_symbols number @(const uint32_t) number of symbols to be excluded from casting
+---@param num_model_params number @(const uint32_t) number of model parameters
+---@param num_widest_dtype_op_names number @(const uint32_t) number of ops to be casted to the widest dtype
+---@param num_conditional_fp32_op_names number @(const uint32_t) number of ops to be cast to fp32 based on precision
+---@param target_dtype_op_names number @(const char * *) op names to be casted to target_dtype
+---@param fp32_op_names number @(const char * *) op names to be casted to fp32
+---@param widest_dtype_op_names number @(const char * *) names to be casted to widest dtype
+---@param conditional_fp32_op_names number @(const char * *) names to be casted to FP32 conditionally
+---@param excluded_symbols number @(const char * *) symbol names to be excluded from casting
+---@param param_names @param names for conditional FP32 casting
+---@param param_values @param values for conditional FP32 casting
+---@param arg_names number @(const char * *) argument names for which type information is provided
+---@param model_param_names number @(const char * *) names for model parameters
+--- 
+function M.MXReducePrecisionSymbol(sym_handle, ret_sym_handle, num_args, arg_type_data, num_ind_ptr, ind_ptr, target_dtype, cast_optional_params, num_target_dtype_op_names, num_fp32_op_names, num_widest_dtype_op_names, num_conditional_fp32_op_names, num_excluded_symbols, num_model_params, target_dtype_op_names, fp32_op_names, widest_dtype_op_names, conditional_fp32_op_names, excluded_symbols, conditional_param_names, conditional_param_vals, model_param_names, arg_names)
+    return _CALL("MXReducePrecisionSymbol", sym_handle, ret_sym_handle, num_args, arg_type_data, num_ind_ptr, ind_ptr, target_dtype, cast_optional_params, num_target_dtype_op_names, num_fp32_op_names, num_widest_dtype_op_names, num_conditional_fp32_op_names, num_excluded_symbols, num_model_params, target_dtype_op_names, fp32_op_names, widest_dtype_op_names, conditional_fp32_op_names, excluded_symbols, conditional_param_names, conditional_param_vals, model_param_names, arg_names)
+end
+_FUNCDEF("MXReducePrecisionSymbol", { "SymbolHandle", "SymbolHandle *", "uint32_t", "const int *", "uint32_t", "const int *", "const int *", "const int", "const uint32_t", "const uint32_t", "const uint32_t", "const uint32_t", "const uint32_t", "const uint32_t", "const char * *", "const char * *", "const char * *", "const char * *", "const char * *", "const char * *", "const char * *", "const char * *", "const char * *" }, "int")
 
 --
 
 --- 
 ---@brief Set calibration table to node attributes in the sym
----@param sym_handle number @(SymbolHandle) symbol whose node attributes are to be set by calibration table
----@param num_layers number @(const mx_uint) number of layers in the calibration table
+---@param qsym_handle number @(SymbolHandle) symbol whose node attributes are to be set by calibration table
+---@param num_layers number @(const uint32_t) number of layers in the calibration table
 ---@param layer_names number @(const char * *) names stored as keys in the calibration table
 ---@param low_quantiles number @(const float *) low quantiles of layers stored in the calibration table
 ---@param high_quantiles number @(const float *) high quantiles of layers stored in the calibration table
 ---@param ret_sym_handle number @(SymbolHandle *) returned symbol
 --- 
-function M.MXSetCalibTableToQuantizedSymbol(sym_handle, num_layers, layer_names, low_quantiles, high_quantiles, ret_sym_handle)
-    return _CALL("MXSetCalibTableToQuantizedSymbol", sym_handle, num_layers, layer_names, low_quantiles, high_quantiles, ret_sym_handle)
+function M.MXSetCalibTableToQuantizedSymbol(qsym_handle, num_layers, layer_names, low_quantiles, high_quantiles, ret_sym_handle)
+    return _CALL("MXSetCalibTableToQuantizedSymbol", qsym_handle, num_layers, layer_names, low_quantiles, high_quantiles, ret_sym_handle)
 end
-_FUNCDEF("MXSetCalibTableToQuantizedSymbol", { "SymbolHandle", "const mx_uint", "const char * *", "const float *", "const float *", "SymbolHandle *" }, "int")
+_FUNCDEF("MXSetCalibTableToQuantizedSymbol", { "SymbolHandle", "const uint32_t", "const char * *", "const float *", "const float *", "SymbolHandle *" }, "int")
 
 --
 
@@ -2236,6 +2497,25 @@ function M.MXGenAtomicSymbolFromSymbol(sym_handle, ret_sym_handle)
     return _CALL("MXGenAtomicSymbolFromSymbol", sym_handle, ret_sym_handle)
 end
 _FUNCDEF("MXGenAtomicSymbolFromSymbol", { "SymbolHandle", "SymbolHandle *" }, "int")
+
+--
+
+--- 
+---@brief Partitions symbol for given backend, potentially creating subgraphs
+---@param sym_handle number @(SymbolHandle) symbol to be partitioned
+---@param dev_type number @(const int) context device type
+---@param backend_name string @(const char *) backend name
+---@param ret_sym_handle number @(SymbolHandle *) partitioned symbol returned
+---@param len number @(const mx_uint) number of args
+---@param in_args_handle number @(NDArrayHandle *) args array
+---@param num_options number @(const mx_uint) number of key value pairs
+---@param keys number @(const char * *) keys for options
+---@param vals number @(const char * *) values corresponding to keys
+--- 
+function M.MXOptimizeForBackend(sym_handle, backend_name, dev_type, ret_sym_handle, len, in_args_handle, num_options, keys, vals)
+    return _CALL("MXOptimizeForBackend", sym_handle, backend_name, dev_type, ret_sym_handle, len, in_args_handle, num_options, keys, vals)
+end
+_FUNCDEF("MXOptimizeForBackend", { "SymbolHandle", "const char *", "const int", "SymbolHandle *", "const mx_uint", "NDArrayHandle *", "const mx_uint", "const char * *", "const char * *" }, "int")
 
 --
 
@@ -2282,7 +2562,7 @@ _FUNCDEF("MXExecutorForward", { "ExecutorHandle", "int" }, "int")
 ---@brief Excecutor run backward
 --- 
 ---@param handle number @(ExecutorHandle) execute handle
----@param len number @(mx_uint) lenth
+---@param len number @(uint32_t) lenth
 ---@param head_grads number @(NDArrayHandle *) NDArray handle for heads' gradient
 --- 
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -2290,7 +2570,7 @@ _FUNCDEF("MXExecutorForward", { "ExecutorHandle", "int" }, "int")
 function M.MXExecutorBackward(handle, len, head_grads)
     return _CALL("MXExecutorBackward", handle, len, head_grads)
 end
-_FUNCDEF("MXExecutorBackward", { "ExecutorHandle", "mx_uint", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXExecutorBackward", { "ExecutorHandle", "uint32_t", "NDArrayHandle *" }, "int")
 
 --
 
@@ -2298,7 +2578,7 @@ _FUNCDEF("MXExecutorBackward", { "ExecutorHandle", "mx_uint", "NDArrayHandle *" 
 ---@brief Excecutor run backward
 --- 
 ---@param handle number @(ExecutorHandle) execute handle
----@param len number @(mx_uint) lenth
+---@param len number @(uint32_t) lenth
 ---@param head_grads number @(NDArrayHandle *) NDArray handle for heads' gradient
 ---@param is_train number @(int) int value to indicate whether the backward pass is for evaluation
 --- 
@@ -2307,7 +2587,7 @@ _FUNCDEF("MXExecutorBackward", { "ExecutorHandle", "mx_uint", "NDArrayHandle *" 
 function M.MXExecutorBackwardEx(handle, len, head_grads, is_train)
     return _CALL("MXExecutorBackwardEx", handle, len, head_grads, is_train)
 end
-_FUNCDEF("MXExecutorBackwardEx", { "ExecutorHandle", "mx_uint", "NDArrayHandle *", "int" }, "int")
+_FUNCDEF("MXExecutorBackwardEx", { "ExecutorHandle", "uint32_t", "NDArrayHandle *", "int" }, "int")
 
 --
 
@@ -2315,14 +2595,14 @@ _FUNCDEF("MXExecutorBackwardEx", { "ExecutorHandle", "mx_uint", "NDArrayHandle *
 ---@brief Get executor's head NDArray
 --- 
 ---@param handle number @(ExecutorHandle) executor handle
----@param out_size number @(mx_uint *) output narray vector size
+---@param out_size number @(uint32_t *) output narray vector size
 ---@param out number @(NDArrayHandle * *) out put narray handles
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXExecutorOutputs(handle, out_size, out)
     return _CALL("MXExecutorOutputs", handle, out_size, out)
 end
-_FUNCDEF("MXExecutorOutputs", { "ExecutorHandle", "mx_uint *", "NDArrayHandle * *" }, "int")
+_FUNCDEF("MXExecutorOutputs", { "ExecutorHandle", "uint32_t *", "NDArrayHandle * *" }, "int")
 
 --
 
@@ -2332,11 +2612,11 @@ _FUNCDEF("MXExecutorOutputs", { "ExecutorHandle", "mx_uint *", "NDArrayHandle * 
 ---@param symbol_handle number @(SymbolHandle) symbol handle
 ---@param dev_type number @(int) device type
 ---@param dev_id number @(int) device id
----@param len number @(mx_uint) length
+---@param len number @(uint32_t) length
 ---@param in_args number @(NDArrayHandle *) in args array
 ---@param arg_grad_store number @(NDArrayHandle *) arg grads handle array
----@param grad_req_type number @(mx_uint *) grad req array
----@param aux_states_len number @(mx_uint) length of auxiliary states
+---@param grad_req_type number @(uint32_t *) grad req array
+---@param aux_states_len number @(uint32_t) length of auxiliary states
 ---@param aux_states number @(NDArrayHandle *) auxiliary states array
 ---@param out number @(ExecutorHandle *) output executor handle
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -2344,27 +2624,27 @@ _FUNCDEF("MXExecutorOutputs", { "ExecutorHandle", "mx_uint *", "NDArrayHandle * 
 function M.MXExecutorBind(symbol_handle, dev_type, dev_id, len, in_args, arg_grad_store, grad_req_type, aux_states_len, aux_states, out)
     return _CALL("MXExecutorBind", symbol_handle, dev_type, dev_id, len, in_args, arg_grad_store, grad_req_type, aux_states_len, aux_states, out)
 end
-_FUNCDEF("MXExecutorBind", { "SymbolHandle", "int", "int", "mx_uint", "NDArrayHandle *", "NDArrayHandle *", "mx_uint *", "mx_uint", "NDArrayHandle *", "ExecutorHandle *" }, "int")
+_FUNCDEF("MXExecutorBind", { "SymbolHandle", "int", "int", "uint32_t", "NDArrayHandle *", "NDArrayHandle *", "uint32_t *", "uint32_t", "NDArrayHandle *", "ExecutorHandle *" }, "int")
 
 --
 
 --- 
 ---@brief Generate Executor from symbol,
----  This is advanced function, allow specify group2ctx map.
----  The user can annotate "ctx_group" attribute to name each group.
+--- This is advanced function, allow specify group2ctx map.
+--- The user can annotate "ctx_group" attribute to name each group.
 --- 
 ---@param symbol_handle number @(SymbolHandle) symbol handle
 ---@param dev_type number @(int) device type of default context
 ---@param dev_id number @(int) device id of default context
----@param num_map_keys number @(mx_uint) size of group2ctx map
+---@param num_map_keys number @(uint32_t) size of group2ctx map
 ---@param map_keys number @(const char * *) keys of group2ctx map
 ---@param map_dev_types number @(const int *) device type of group2ctx map
 ---@param map_dev_ids number @(const int *) device id of group2ctx map
----@param len number @(mx_uint) length
+---@param len number @(uint32_t) length
 ---@param in_args number @(NDArrayHandle *) in args array
 ---@param arg_grad_store number @(NDArrayHandle *) arg grads handle array
----@param grad_req_type number @(mx_uint *) grad req array
----@param aux_states_len number @(mx_uint) length of auxiliary states
+---@param grad_req_type number @(uint32_t *) grad req array
+---@param aux_states_len number @(uint32_t) length of auxiliary states
 ---@param aux_states number @(NDArrayHandle *) auxiliary states array
 ---@param out number @(ExecutorHandle *) output executor handle
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -2372,27 +2652,27 @@ _FUNCDEF("MXExecutorBind", { "SymbolHandle", "int", "int", "mx_uint", "NDArrayHa
 function M.MXExecutorBindX(symbol_handle, dev_type, dev_id, num_map_keys, map_keys, map_dev_types, map_dev_ids, len, in_args, arg_grad_store, grad_req_type, aux_states_len, aux_states, out)
     return _CALL("MXExecutorBindX", symbol_handle, dev_type, dev_id, num_map_keys, map_keys, map_dev_types, map_dev_ids, len, in_args, arg_grad_store, grad_req_type, aux_states_len, aux_states, out)
 end
-_FUNCDEF("MXExecutorBindX", { "SymbolHandle", "int", "int", "mx_uint", "const char * *", "const int *", "const int *", "mx_uint", "NDArrayHandle *", "NDArrayHandle *", "mx_uint *", "mx_uint", "NDArrayHandle *", "ExecutorHandle *" }, "int")
+_FUNCDEF("MXExecutorBindX", { "SymbolHandle", "int", "int", "uint32_t", "const char * *", "const int *", "const int *", "uint32_t", "NDArrayHandle *", "NDArrayHandle *", "uint32_t *", "uint32_t", "NDArrayHandle *", "ExecutorHandle *" }, "int")
 
 --
 
 --- 
 ---@brief Generate Executor from symbol,
----  This is advanced function, allow specify group2ctx map.
----  The user can annotate "ctx_group" attribute to name each group.
+--- This is advanced function, allow specify group2ctx map.
+--- The user can annotate "ctx_group" attribute to name each group.
 --- 
 ---@param symbol_handle number @(SymbolHandle) symbol handle
 ---@param dev_type number @(int) device type of default context
 ---@param dev_id number @(int) device id of default context
----@param num_map_keys number @(mx_uint) size of group2ctx map
+---@param num_map_keys number @(uint32_t) size of group2ctx map
 ---@param map_keys number @(const char * *) keys of group2ctx map
 ---@param map_dev_types number @(const int *) device type of group2ctx map
 ---@param map_dev_ids number @(const int *) device id of group2ctx map
----@param len number @(mx_uint) length
+---@param len number @(uint32_t) length
 ---@param in_args number @(NDArrayHandle *) in args array
 ---@param arg_grad_store number @(NDArrayHandle *) arg grads handle array
----@param grad_req_type number @(mx_uint *) grad req array
----@param aux_states_len number @(mx_uint) length of auxiliary states
+---@param grad_req_type number @(uint32_t *) grad req array
+---@param aux_states_len number @(uint32_t) length of auxiliary states
 ---@param aux_states number @(NDArrayHandle *) auxiliary states array
 ---@param shared_exec number @(ExecutorHandle) input executor handle for memory sharing
 ---@param out number @(ExecutorHandle *) output executor handle
@@ -2401,7 +2681,7 @@ _FUNCDEF("MXExecutorBindX", { "SymbolHandle", "int", "int", "mx_uint", "const ch
 function M.MXExecutorBindEX(symbol_handle, dev_type, dev_id, num_map_keys, map_keys, map_dev_types, map_dev_ids, len, in_args, arg_grad_store, grad_req_type, aux_states_len, aux_states, shared_exec, out)
     return _CALL("MXExecutorBindEX", symbol_handle, dev_type, dev_id, num_map_keys, map_keys, map_dev_types, map_dev_ids, len, in_args, arg_grad_store, grad_req_type, aux_states_len, aux_states, shared_exec, out)
 end
-_FUNCDEF("MXExecutorBindEX", { "SymbolHandle", "int", "int", "mx_uint", "const char * *", "const int *", "const int *", "mx_uint", "NDArrayHandle *", "NDArrayHandle *", "mx_uint *", "mx_uint", "NDArrayHandle *", "ExecutorHandle", "ExecutorHandle *" }, "int")
+_FUNCDEF("MXExecutorBindEX", { "SymbolHandle", "int", "int", "uint32_t", "const char * *", "const int *", "const int *", "uint32_t", "NDArrayHandle *", "NDArrayHandle *", "uint32_t *", "uint32_t", "NDArrayHandle *", "ExecutorHandle", "ExecutorHandle *" }, "int")
 
 --
 
@@ -2410,41 +2690,41 @@ _FUNCDEF("MXExecutorBindEX", { "SymbolHandle", "int", "int", "mx_uint", "const c
 function M.MXExecutorSimpleBind(symbol_handle, dev_type, dev_id, num_g2c_keys, g2c_keys, g2c_dev_types, g2c_dev_ids, provided_grad_req_list_len, provided_grad_req_names, provided_grad_req_types, num_provided_arg_shapes, provided_arg_shape_names, provided_arg_shape_data, provided_arg_shape_idx, num_provided_arg_dtypes, provided_arg_dtype_names, provided_arg_dtypes, num_provided_arg_stypes, provided_arg_stype_names, provided_arg_stypes, num_shared_arg_names, shared_arg_name_list, shared_buffer_len, shared_buffer_name_list, shared_buffer_handle_list, updated_shared_buffer_name_list, updated_shared_buffer_handle_list, num_in_args, in_args, arg_grads, num_aux_states, aux_states, shared_exec_handle, out)
     return _CALL("MXExecutorSimpleBind", symbol_handle, dev_type, dev_id, num_g2c_keys, g2c_keys, g2c_dev_types, g2c_dev_ids, provided_grad_req_list_len, provided_grad_req_names, provided_grad_req_types, num_provided_arg_shapes, provided_arg_shape_names, provided_arg_shape_data, provided_arg_shape_idx, num_provided_arg_dtypes, provided_arg_dtype_names, provided_arg_dtypes, num_provided_arg_stypes, provided_arg_stype_names, provided_arg_stypes, num_shared_arg_names, shared_arg_name_list, shared_buffer_len, shared_buffer_name_list, shared_buffer_handle_list, updated_shared_buffer_name_list, updated_shared_buffer_handle_list, num_in_args, in_args, arg_grads, num_aux_states, aux_states, shared_exec_handle, out)
 end
-_FUNCDEF("MXExecutorSimpleBind", { "SymbolHandle", "int", "int", "const mx_uint", "const char * *", "const int *", "const int *", "const mx_uint", "const char * *", "const char * *", "const mx_uint", "const char * *", "const mx_uint *", "const mx_uint *", "const mx_uint", "const char * *", "const int *", "const mx_uint", "const char * *", "const int *", "const mx_uint", "const char * *", "int *", "const char * *", "NDArrayHandle *", "const char * * *", "NDArrayHandle * *", "mx_uint *", "NDArrayHandle * *", "NDArrayHandle * *", "mx_uint *", "NDArrayHandle * *", "ExecutorHandle", "ExecutorHandle *" }, "int")
+_FUNCDEF("MXExecutorSimpleBind", { "SymbolHandle", "int", "int", "const uint32_t", "const char * *", "const int *", "const int *", "const uint32_t", "const char * *", "const char * *", "const uint32_t", "const char * *", "const uint32_t *", "const uint32_t *", "const uint32_t", "const char * *", "const int *", "const uint32_t", "const char * *", "const int *", "const uint32_t", "const char * *", "int *", "const char * *", "NDArrayHandle *", "const char * * *", "NDArrayHandle * *", "uint32_t *", "NDArrayHandle * *", "NDArrayHandle * *", "uint32_t *", "NDArrayHandle * *", "ExecutorHandle", "ExecutorHandle *" }, "int")
 
 --
 
 ---@param symbol_handle number @(SymbolHandle)
 ---@param dev_type number @(int)
 ---@param dev_id number @(int)
----@param num_g2c_keys number @(const mx_uint)
+---@param num_g2c_keys number @(const uint32_t)
 ---@param g2c_keys number @(const char * *)
 ---@param g2c_dev_types number @(const int *)
 ---@param g2c_dev_ids number @(const int *)
----@param provided_grad_req_list_len number @(const mx_uint)
+---@param provided_grad_req_list_len number @(const uint32_t)
 ---@param provided_grad_req_names number @(const char * *)
 ---@param provided_grad_req_types number @(const char * *)
----@param num_provided_arg_shapes number @(const mx_uint)
+---@param num_provided_arg_shapes number @(const uint32_t)
 ---@param provided_arg_shape_names number @(const char * *)
 ---@param provided_arg_shape_data number @(const int *)
----@param provided_arg_shape_idx number @(const mx_uint *)
----@param num_provided_arg_dtypes number @(const mx_uint)
+---@param provided_arg_shape_idx number @(const uint32_t *)
+---@param num_provided_arg_dtypes number @(const uint32_t)
 ---@param provided_arg_dtype_names number @(const char * *)
 ---@param provided_arg_dtypes number @(const int *)
----@param num_provided_arg_stypes number @(const mx_uint)
+---@param num_provided_arg_stypes number @(const uint32_t)
 ---@param provided_arg_stype_names number @(const char * *)
 ---@param provided_arg_stypes number @(const int *)
----@param num_shared_arg_names number @(const mx_uint)
+---@param num_shared_arg_names number @(const uint32_t)
 ---@param shared_arg_name_list number @(const char * *)
 ---@param shared_buffer_len number @(int *)
 ---@param shared_buffer_name_list number @(const char * *)
 ---@param shared_buffer_handle_list number @(NDArrayHandle *)
 ---@param updated_shared_buffer_name_list number @(const char * * *)
 ---@param updated_shared_buffer_handle_list number @(NDArrayHandle * *)
----@param num_in_args number @(mx_uint *)
+---@param num_in_args number @(uint32_t *)
 ---@param in_args number @(NDArrayHandle * *)
 ---@param arg_grads number @(NDArrayHandle * *)
----@param num_aux_states number @(mx_uint *)
+---@param num_aux_states number @(uint32_t *)
 ---@param aux_states number @(NDArrayHandle * *)
 ---@param shared_exec_handle number @(ExecutorHandle)
 ---@param out number @(ExecutorHandle *)
@@ -2452,7 +2732,49 @@ _FUNCDEF("MXExecutorSimpleBind", { "SymbolHandle", "int", "int", "const mx_uint"
 function M.MXExecutorSimpleBindEx(symbol_handle, dev_type, dev_id, num_g2c_keys, g2c_keys, g2c_dev_types, g2c_dev_ids, provided_grad_req_list_len, provided_grad_req_names, provided_grad_req_types, num_provided_arg_shapes, provided_arg_shape_names, provided_arg_shape_data, provided_arg_shape_idx, num_provided_arg_dtypes, provided_arg_dtype_names, provided_arg_dtypes, num_provided_arg_stypes, provided_arg_stype_names, provided_arg_stypes, num_shared_arg_names, shared_arg_name_list, shared_buffer_len, shared_buffer_name_list, shared_buffer_handle_list, updated_shared_buffer_name_list, updated_shared_buffer_handle_list, num_in_args, in_args, arg_grads, num_aux_states, aux_states, shared_exec_handle, out)
     return _CALL("MXExecutorSimpleBindEx", symbol_handle, dev_type, dev_id, num_g2c_keys, g2c_keys, g2c_dev_types, g2c_dev_ids, provided_grad_req_list_len, provided_grad_req_names, provided_grad_req_types, num_provided_arg_shapes, provided_arg_shape_names, provided_arg_shape_data, provided_arg_shape_idx, num_provided_arg_dtypes, provided_arg_dtype_names, provided_arg_dtypes, num_provided_arg_stypes, provided_arg_stype_names, provided_arg_stypes, num_shared_arg_names, shared_arg_name_list, shared_buffer_len, shared_buffer_name_list, shared_buffer_handle_list, updated_shared_buffer_name_list, updated_shared_buffer_handle_list, num_in_args, in_args, arg_grads, num_aux_states, aux_states, shared_exec_handle, out)
 end
-_FUNCDEF("MXExecutorSimpleBindEx", { "SymbolHandle", "int", "int", "const mx_uint", "const char * *", "const int *", "const int *", "const mx_uint", "const char * *", "const char * *", "const mx_uint", "const char * *", "const int *", "const mx_uint *", "const mx_uint", "const char * *", "const int *", "const mx_uint", "const char * *", "const int *", "const mx_uint", "const char * *", "int *", "const char * *", "NDArrayHandle *", "const char * * *", "NDArrayHandle * *", "mx_uint *", "NDArrayHandle * *", "NDArrayHandle * *", "mx_uint *", "NDArrayHandle * *", "ExecutorHandle", "ExecutorHandle *" }, "int")
+_FUNCDEF("MXExecutorSimpleBindEx", { "SymbolHandle", "int", "int", "const uint32_t", "const char * *", "const int *", "const int *", "const uint32_t", "const char * *", "const char * *", "const uint32_t", "const char * *", "const int *", "const uint32_t *", "const uint32_t", "const char * *", "const int *", "const uint32_t", "const char * *", "const int *", "const uint32_t", "const char * *", "int *", "const char * *", "NDArrayHandle *", "const char * * *", "NDArrayHandle * *", "uint32_t *", "NDArrayHandle * *", "NDArrayHandle * *", "uint32_t *", "NDArrayHandle * *", "ExecutorHandle", "ExecutorHandle *" }, "int")
+
+--
+
+---@param symbol_handle number @(SymbolHandle)
+---@param dev_type number @(int)
+---@param dev_id number @(int)
+---@param num_g2c_keys number @(const uint32_t)
+---@param g2c_keys number @(const char * *)
+---@param g2c_dev_types number @(const int *)
+---@param g2c_dev_ids number @(const int *)
+---@param provided_grad_req_list_len number @(const uint32_t)
+---@param provided_grad_req_names number @(const char * *)
+---@param provided_grad_req_types number @(const char * *)
+---@param num_provided_arg_shapes number @(const uint32_t)
+---@param provided_arg_shape_names number @(const char * *)
+---@param provided_arg_shape_data number @(const int64_t *)
+---@param provided_arg_shape_idx number @(const uint32_t *)
+---@param num_provided_arg_dtypes number @(const uint32_t)
+---@param provided_arg_dtype_names number @(const char * *)
+---@param provided_arg_dtypes number @(const int *)
+---@param num_provided_arg_stypes number @(const uint32_t)
+---@param provided_arg_stype_names number @(const char * *)
+---@param provided_arg_stypes number @(const int *)
+---@param num_shared_arg_names number @(const uint32_t)
+---@param shared_arg_name_list number @(const char * *)
+---@param shared_buffer_len number @(int *)
+---@param shared_buffer_name_list number @(const char * *)
+---@param shared_buffer_handle_list number @(NDArrayHandle *)
+---@param updated_shared_buffer_name_list number @(const char * * *)
+---@param updated_shared_buffer_handle_list number @(NDArrayHandle * *)
+---@param num_in_args number @(uint32_t *)
+---@param in_args number @(NDArrayHandle * *)
+---@param arg_grads number @(NDArrayHandle * *)
+---@param num_aux_states number @(uint32_t *)
+---@param aux_states number @(NDArrayHandle * *)
+---@param shared_exec_handle number @(ExecutorHandle)
+---@param out number @(ExecutorHandle *)
+---@return number @(int)
+function M.MXExecutorSimpleBindEx64(symbol_handle, dev_type, dev_id, num_g2c_keys, g2c_keys, g2c_dev_types, g2c_dev_ids, provided_grad_req_list_len, provided_grad_req_names, provided_grad_req_types, num_provided_arg_shapes, provided_arg_shape_names, provided_arg_shape_data, provided_arg_shape_idx, num_provided_arg_dtypes, provided_arg_dtype_names, provided_arg_dtypes, num_provided_arg_stypes, provided_arg_stype_names, provided_arg_stypes, num_shared_arg_names, shared_arg_name_list, shared_buffer_len, shared_buffer_name_list, shared_buffer_handle_list, updated_shared_buffer_name_list, updated_shared_buffer_handle_list, num_in_args, in_args, arg_grads, num_aux_states, aux_states, shared_exec_handle, out)
+    return _CALL("MXExecutorSimpleBindEx64", symbol_handle, dev_type, dev_id, num_g2c_keys, g2c_keys, g2c_dev_types, g2c_dev_ids, provided_grad_req_list_len, provided_grad_req_names, provided_grad_req_types, num_provided_arg_shapes, provided_arg_shape_names, provided_arg_shape_data, provided_arg_shape_idx, num_provided_arg_dtypes, provided_arg_dtype_names, provided_arg_dtypes, num_provided_arg_stypes, provided_arg_stype_names, provided_arg_stypes, num_shared_arg_names, shared_arg_name_list, shared_buffer_len, shared_buffer_name_list, shared_buffer_handle_list, updated_shared_buffer_name_list, updated_shared_buffer_handle_list, num_in_args, in_args, arg_grads, num_aux_states, aux_states, shared_exec_handle, out)
+end
+_FUNCDEF("MXExecutorSimpleBindEx64", { "SymbolHandle", "int", "int", "const uint32_t", "const char * *", "const int *", "const int *", "const uint32_t", "const char * *", "const char * *", "const uint32_t", "const char * *", "const int64_t *", "const uint32_t *", "const uint32_t", "const char * *", "const int *", "const uint32_t", "const char * *", "const int *", "const uint32_t", "const char * *", "int *", "const char * *", "NDArrayHandle *", "const char * * *", "NDArrayHandle * *", "uint32_t *", "NDArrayHandle * *", "NDArrayHandle * *", "uint32_t *", "NDArrayHandle * *", "ExecutorHandle", "ExecutorHandle *" }, "int")
 
 --
 
@@ -2465,14 +2787,14 @@ _FUNCDEF("MXExecutorSimpleBindEx", { "SymbolHandle", "int", "int", "const mx_uin
 ---@param allow_up_sizing number @(int) Whether to allow allocating new ndarrays that's larger than the original.
 ---@param dev_type number @(int) device type of default context
 ---@param dev_id number @(int) device id of default context
----@param num_map_keys number @(mx_uint) size of group2ctx map
+---@param num_map_keys number @(uint32_t) size of group2ctx map
 ---@param map_keys number @(const char * *) keys of group2ctx map
 ---@param map_dev_types number @(const int *) device type of group2ctx map
 ---@param map_dev_ids number @(const int *) device id of group2ctx map
----@param num_in_args number @(mx_uint *) length of in_args
+---@param num_in_args number @(uint32_t *) length of in_args
 ---@param in_args number @(NDArrayHandle * *) in args array
 ---@param arg_grads number @(NDArrayHandle * *) arg grads handle array
----@param num_aux_states number @(mx_uint *) length of auxiliary states
+---@param num_aux_states number @(uint32_t *) length of auxiliary states
 ---@param aux_states number @(NDArrayHandle * *) auxiliary states array
 ---@param shared_exec number @(ExecutorHandle) input executor handle for memory sharing
 ---@param out number @(ExecutorHandle *) output executor handle
@@ -2481,7 +2803,7 @@ _FUNCDEF("MXExecutorSimpleBindEx", { "SymbolHandle", "int", "int", "const mx_uin
 function M.MXExecutorReshape(partial_shaping, allow_up_sizing, dev_type, dev_id, num_map_keys, map_keys, map_dev_types, map_dev_ids, num_provided_arg_shapes, provided_arg_shape_names, provided_arg_shape_data, provided_arg_shape_idx, num_in_args, in_args, arg_grads, num_aux_states, aux_states, shared_exec, out)
     return _CALL("MXExecutorReshape", partial_shaping, allow_up_sizing, dev_type, dev_id, num_map_keys, map_keys, map_dev_types, map_dev_ids, num_provided_arg_shapes, provided_arg_shape_names, provided_arg_shape_data, provided_arg_shape_idx, num_in_args, in_args, arg_grads, num_aux_states, aux_states, shared_exec, out)
 end
-_FUNCDEF("MXExecutorReshape", { "int", "int", "int", "int", "mx_uint", "const char * *", "const int *", "const int *", "const mx_uint", "const char * *", "const mx_uint *", "const mx_uint *", "mx_uint *", "NDArrayHandle * *", "NDArrayHandle * *", "mx_uint *", "NDArrayHandle * *", "ExecutorHandle", "ExecutorHandle *" }, "int")
+_FUNCDEF("MXExecutorReshape", { "int", "int", "int", "int", "uint32_t", "const char * *", "const int *", "const int *", "const uint32_t", "const char * *", "const uint32_t *", "const uint32_t *", "uint32_t *", "NDArrayHandle * *", "NDArrayHandle * *", "uint32_t *", "NDArrayHandle * *", "ExecutorHandle", "ExecutorHandle *" }, "int")
 
 --
 
@@ -2493,14 +2815,14 @@ _FUNCDEF("MXExecutorReshape", { "int", "int", "int", "int", "mx_uint", "const ch
 ---@param allow_up_sizing number @(int) Whether to allow allocating new ndarrays that's larger than the original.
 ---@param dev_type number @(int) device type of default context
 ---@param dev_id number @(int) device id of default context
----@param num_map_keys number @(mx_uint) size of group2ctx map
+---@param num_map_keys number @(uint32_t) size of group2ctx map
 ---@param map_keys number @(const char * *) keys of group2ctx map
 ---@param map_dev_types number @(const int *) device type of group2ctx map
 ---@param map_dev_ids number @(const int *) device id of group2ctx map
----@param num_in_args number @(mx_uint *) length of in_args
+---@param num_in_args number @(uint32_t *) length of in_args
 ---@param in_args number @(NDArrayHandle * *) in args array
 ---@param arg_grads number @(NDArrayHandle * *) arg grads handle array
----@param num_aux_states number @(mx_uint *) length of auxiliary states
+---@param num_aux_states number @(uint32_t *) length of auxiliary states
 ---@param aux_states number @(NDArrayHandle * *) auxiliary states array
 ---@param shared_exec number @(ExecutorHandle) input executor handle for memory sharing
 ---@param out number @(ExecutorHandle *) output executor handle
@@ -2509,7 +2831,7 @@ _FUNCDEF("MXExecutorReshape", { "int", "int", "int", "int", "mx_uint", "const ch
 function M.MXExecutorReshapeEx(partial_shaping, allow_up_sizing, dev_type, dev_id, num_map_keys, map_keys, map_dev_types, map_dev_ids, num_provided_arg_shapes, provided_arg_shape_names, provided_arg_shape_data, provided_arg_shape_idx, num_in_args, in_args, arg_grads, num_aux_states, aux_states, shared_exec, out)
     return _CALL("MXExecutorReshapeEx", partial_shaping, allow_up_sizing, dev_type, dev_id, num_map_keys, map_keys, map_dev_types, map_dev_ids, num_provided_arg_shapes, provided_arg_shape_names, provided_arg_shape_data, provided_arg_shape_idx, num_in_args, in_args, arg_grads, num_aux_states, aux_states, shared_exec, out)
 end
-_FUNCDEF("MXExecutorReshapeEx", { "int", "int", "int", "int", "mx_uint", "const char * *", "const int *", "const int *", "const mx_uint", "const char * *", "const int *", "const mx_uint *", "mx_uint *", "NDArrayHandle * *", "NDArrayHandle * *", "mx_uint *", "NDArrayHandle * *", "ExecutorHandle", "ExecutorHandle *" }, "int")
+_FUNCDEF("MXExecutorReshapeEx", { "int", "int", "int", "int", "uint32_t", "const char * *", "const int *", "const int *", "const uint32_t", "const char * *", "const int *", "const uint32_t *", "uint32_t *", "NDArrayHandle * *", "NDArrayHandle * *", "uint32_t *", "NDArrayHandle * *", "ExecutorHandle", "ExecutorHandle *" }, "int")
 
 --
 
@@ -2546,14 +2868,14 @@ _FUNCDEF("MXExecutorSetMonitorCallbackEX", { "ExecutorHandle", "ExecutorMonitorC
 
 --- 
 ---@brief List all the available iterator entries
----@param out_size number @(mx_uint *) the size of returned iterators
+---@param out_size number @(uint32_t *) the size of returned iterators
 ---@param out_array number @(DataIterCreator * *) the output iteratos entries
 ---@return number @(int) 0 when success, -1 when failure happens
 --- 
 function M.MXListDataIters(out_size, out_array)
     return _CALL("MXListDataIters", out_size, out_array)
 end
-_FUNCDEF("MXListDataIters", { "mx_uint *", "DataIterCreator * *" }, "int")
+_FUNCDEF("MXListDataIters", { "uint32_t *", "DataIterCreator * *" }, "int")
 
 --
 
@@ -2561,7 +2883,7 @@ _FUNCDEF("MXListDataIters", { "mx_uint *", "DataIterCreator * *" }, "int")
 ---@brief Init an iterator, init with parameters
 --- the array size of passed in arguments
 ---@param handle number @(DataIterCreator) of the iterator creator
----@param num_param number @(mx_uint) number of parameter
+---@param num_param number @(uint32_t) number of parameter
 ---@param keys number @(const char * *) parameter keys
 ---@param vals number @(const char * *) parameter values
 ---@param out number @(DataIterHandle *) resulting iterator
@@ -2570,7 +2892,7 @@ _FUNCDEF("MXListDataIters", { "mx_uint *", "DataIterCreator * *" }, "int")
 function M.MXDataIterCreateIter(handle, num_param, keys, vals, out)
     return _CALL("MXDataIterCreateIter", handle, num_param, keys, vals, out)
 end
-_FUNCDEF("MXDataIterCreateIter", { "DataIterCreator", "mx_uint", "const char * *", "const char * *", "DataIterHandle *" }, "int")
+_FUNCDEF("MXDataIterCreateIter", { "DataIterCreator", "uint32_t", "const char * *", "const char * *", "DataIterHandle *" }, "int")
 
 --
 
@@ -2579,7 +2901,7 @@ _FUNCDEF("MXDataIterCreateIter", { "DataIterCreator", "mx_uint", "const char * *
 ---@param creator number @(DataIterCreator) the DataIterCreator.
 ---@param name number @(const char * *) The returned name of the creator.
 ---@param description number @(const char * *) The returned description of the symbol.
----@param num_args number @(mx_uint *) Number of arguments.
+---@param num_args number @(uint32_t *) Number of arguments.
 ---@param arg_names number @(const char * * *) Name of the arguments.
 ---@param arg_type_infos number @(const char * * *) Type informations about the arguments.
 ---@param arg_descriptions number @(const char * * *) Description information about the arguments.
@@ -2588,7 +2910,7 @@ _FUNCDEF("MXDataIterCreateIter", { "DataIterCreator", "mx_uint", "const char * *
 function M.MXDataIterGetIterInfo(creator, name, description, num_args, arg_names, arg_type_infos, arg_descriptions)
     return _CALL("MXDataIterGetIterInfo", creator, name, description, num_args, arg_names, arg_type_infos, arg_descriptions)
 end
-_FUNCDEF("MXDataIterGetIterInfo", { "DataIterCreator", "const char * *", "const char * *", "mx_uint *", "const char * * *", "const char * * *", "const char * * *" }, "int")
+_FUNCDEF("MXDataIterGetIterInfo", { "DataIterCreator", "const char * *", "const char * *", "uint32_t *", "const char * * *", "const char * * *", "const char * * *" }, "int")
 
 --
 
@@ -2684,14 +3006,14 @@ _FUNCDEF("MXDataIterGetLabel", { "DataIterHandle", "NDArrayHandle *" }, "int")
 
 --- 
 ---@brief Initialized ps-lite environment variables
----@param num_vars number @(mx_uint) number of variables to initialize
+---@param num_vars number @(uint32_t) number of variables to initialize
 ---@param keys number @(const char * *) environment keys
 ---@param vals number @(const char * *) environment values
 --- 
 function M.MXInitPSEnv(num_vars, keys, vals)
     return _CALL("MXInitPSEnv", num_vars, keys, vals)
 end
-_FUNCDEF("MXInitPSEnv", { "mx_uint", "const char * *", "const char * *" }, "int")
+_FUNCDEF("MXInitPSEnv", { "uint32_t", "const char * *", "const char * *" }, "int")
 
 --
 
@@ -2718,7 +3040,7 @@ _FUNCDEF("MXKVStoreCreate", { "const char *", "KVStoreHandle *" }, "int")
 function M.MXKVStoreSetGradientCompression(handle, num_params, keys, vals)
     return _CALL("MXKVStoreSetGradientCompression", handle, num_params, keys, vals)
 end
-_FUNCDEF("MXKVStoreSetGradientCompression", { "KVStoreHandle", "mx_uint", "const char * *", "const char * *" }, "int")
+_FUNCDEF("MXKVStoreSetGradientCompression", { "KVStoreHandle", "uint32_t", "const char * *", "const char * *" }, "int")
 
 --
 
@@ -2737,7 +3059,7 @@ _FUNCDEF("MXKVStoreFree", { "KVStoreHandle" }, "int")
 --- 
 ---@brief Init a list of (key,value) pairs in kvstore
 ---@param handle number @(KVStoreHandle) handle to the kvstore
----@param num number @(mx_uint) the number of key-value pairs
+---@param num number @(uint32_t) the number of key-value pairs
 ---@param keys number @(const int *) the list of keys
 ---@param vals number @(NDArrayHandle *) the list of values
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -2745,14 +3067,14 @@ _FUNCDEF("MXKVStoreFree", { "KVStoreHandle" }, "int")
 function M.MXKVStoreInit(handle, num, keys, vals)
     return _CALL("MXKVStoreInit", handle, num, keys, vals)
 end
-_FUNCDEF("MXKVStoreInit", { "KVStoreHandle", "mx_uint", "const int *", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXKVStoreInit", { "KVStoreHandle", "uint32_t", "const int *", "NDArrayHandle *" }, "int")
 
 --
 
 --- 
 ---@brief Init a list of (key,value) pairs in kvstore, where each key is a string
 ---@param handle number @(KVStoreHandle) handle to the kvstore
----@param num number @(mx_uint) the number of key-value pairs
+---@param num number @(uint32_t) the number of key-value pairs
 ---@param keys number @(const char * *) the list of keys
 ---@param vals number @(NDArrayHandle *) the list of values
 ---@return number @(int) 0 when success, -1 when failure happens
@@ -2760,14 +3082,14 @@ _FUNCDEF("MXKVStoreInit", { "KVStoreHandle", "mx_uint", "const int *", "NDArrayH
 function M.MXKVStoreInitEx(handle, num, keys, vals)
     return _CALL("MXKVStoreInitEx", handle, num, keys, vals)
 end
-_FUNCDEF("MXKVStoreInitEx", { "KVStoreHandle", "mx_uint", "const char * *", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXKVStoreInitEx", { "KVStoreHandle", "uint32_t", "const char * *", "NDArrayHandle *" }, "int")
 
 --
 
 --- 
 ---@brief Push a list of (key,value) pairs to kvstore
 ---@param handle number @(KVStoreHandle) handle to the kvstore
----@param num number @(mx_uint) the number of key-value pairs
+---@param num number @(uint32_t) the number of key-value pairs
 ---@param keys number @(const int *) the list of keys
 ---@param vals number @(NDArrayHandle *) the list of values
 ---@param priority number @(int) the priority of the action
@@ -2776,14 +3098,14 @@ _FUNCDEF("MXKVStoreInitEx", { "KVStoreHandle", "mx_uint", "const char * *", "NDA
 function M.MXKVStorePush(handle, num, keys, vals, priority)
     return _CALL("MXKVStorePush", handle, num, keys, vals, priority)
 end
-_FUNCDEF("MXKVStorePush", { "KVStoreHandle", "mx_uint", "const int *", "NDArrayHandle *", "int" }, "int")
+_FUNCDEF("MXKVStorePush", { "KVStoreHandle", "uint32_t", "const int *", "NDArrayHandle *", "int" }, "int")
 
 --
 
 --- 
 ---@brief Push a list of (key,value) pairs to kvstore, where each key is a string
 ---@param handle number @(KVStoreHandle) handle to the kvstore
----@param num number @(mx_uint) the number of key-value pairs
+---@param num number @(uint32_t) the number of key-value pairs
 ---@param keys number @(const char * *) the list of keys
 ---@param vals number @(NDArrayHandle *) the list of values
 ---@param priority number @(int) the priority of the action
@@ -2792,14 +3114,14 @@ _FUNCDEF("MXKVStorePush", { "KVStoreHandle", "mx_uint", "const int *", "NDArrayH
 function M.MXKVStorePushEx(handle, num, keys, vals, priority)
     return _CALL("MXKVStorePushEx", handle, num, keys, vals, priority)
 end
-_FUNCDEF("MXKVStorePushEx", { "KVStoreHandle", "mx_uint", "const char * *", "NDArrayHandle *", "int" }, "int")
+_FUNCDEF("MXKVStorePushEx", { "KVStoreHandle", "uint32_t", "const char * *", "NDArrayHandle *", "int" }, "int")
 
 --
 
 --- 
 ---@brief pull a list of (key, value) pairs from the kvstore
 ---@param handle number @(KVStoreHandle) handle to the kvstore
----@param num number @(mx_uint) the number of key-value pairs
+---@param num number @(uint32_t) the number of key-value pairs
 ---@param keys number @(const int *) the list of keys
 ---@param vals number @(NDArrayHandle *) the list of values
 ---@param priority number @(int) the priority of the action
@@ -2809,14 +3131,14 @@ _FUNCDEF("MXKVStorePushEx", { "KVStoreHandle", "mx_uint", "const char * *", "NDA
 function M.MXKVStorePullWithSparse(handle, num, keys, vals, priority, ignore_sparse)
     return _CALL("MXKVStorePullWithSparse", handle, num, keys, vals, priority, ignore_sparse)
 end
-_FUNCDEF("MXKVStorePullWithSparse", { "KVStoreHandle", "mx_uint", "const int *", "NDArrayHandle *", "int", "bool" }, "int")
+_FUNCDEF("MXKVStorePullWithSparse", { "KVStoreHandle", "uint32_t", "const int *", "NDArrayHandle *", "int", "bool" }, "int")
 
 --
 
 --- 
 ---@brief pull a list of (key, value) pairs from the kvstore, where each key is a string
 ---@param handle number @(KVStoreHandle) handle to the kvstore
----@param num number @(mx_uint) the number of key-value pairs
+---@param num number @(uint32_t) the number of key-value pairs
 ---@param keys number @(const char * *) the list of keys
 ---@param vals number @(NDArrayHandle *) the list of values
 ---@param priority number @(int) the priority of the action
@@ -2826,14 +3148,14 @@ _FUNCDEF("MXKVStorePullWithSparse", { "KVStoreHandle", "mx_uint", "const int *",
 function M.MXKVStorePullWithSparseEx(handle, num, keys, vals, priority, ignore_sparse)
     return _CALL("MXKVStorePullWithSparseEx", handle, num, keys, vals, priority, ignore_sparse)
 end
-_FUNCDEF("MXKVStorePullWithSparseEx", { "KVStoreHandle", "mx_uint", "const char * *", "NDArrayHandle *", "int", "bool" }, "int")
+_FUNCDEF("MXKVStorePullWithSparseEx", { "KVStoreHandle", "uint32_t", "const char * *", "NDArrayHandle *", "int", "bool" }, "int")
 
 --
 
 --- 
 ---@brief pull a list of (key, value) pairs from the kvstore
 ---@param handle number @(KVStoreHandle) handle to the kvstore
----@param num number @(mx_uint) the number of key-value pairs
+---@param num number @(uint32_t) the number of key-value pairs
 ---@param keys number @(const int *) the list of keys
 ---@param vals number @(NDArrayHandle *) the list of values
 ---@param priority number @(int) the priority of the action
@@ -2842,14 +3164,14 @@ _FUNCDEF("MXKVStorePullWithSparseEx", { "KVStoreHandle", "mx_uint", "const char 
 function M.MXKVStorePull(handle, num, keys, vals, priority)
     return _CALL("MXKVStorePull", handle, num, keys, vals, priority)
 end
-_FUNCDEF("MXKVStorePull", { "KVStoreHandle", "mx_uint", "const int *", "NDArrayHandle *", "int" }, "int")
+_FUNCDEF("MXKVStorePull", { "KVStoreHandle", "uint32_t", "const int *", "NDArrayHandle *", "int" }, "int")
 
 --
 
 --- 
 ---@brief pull a list of (key, value) pairs from the kvstore, where each key is a string
 ---@param handle number @(KVStoreHandle) handle to the kvstore
----@param num number @(mx_uint) the number of key-value pairs
+---@param num number @(uint32_t) the number of key-value pairs
 ---@param keys number @(const char * *) the list of keys
 ---@param vals number @(NDArrayHandle *) the list of values
 ---@param priority number @(int) the priority of the action
@@ -2858,16 +3180,16 @@ _FUNCDEF("MXKVStorePull", { "KVStoreHandle", "mx_uint", "const int *", "NDArrayH
 function M.MXKVStorePullEx(handle, num, keys, vals, priority)
     return _CALL("MXKVStorePullEx", handle, num, keys, vals, priority)
 end
-_FUNCDEF("MXKVStorePullEx", { "KVStoreHandle", "mx_uint", "const char * *", "NDArrayHandle *", "int" }, "int")
+_FUNCDEF("MXKVStorePullEx", { "KVStoreHandle", "uint32_t", "const char * *", "NDArrayHandle *", "int" }, "int")
 
 --
 
 --- 
 ---@brief pull a list of (key, value) pairs from the kvstore, where each key is an integer.
----        The NDArray pulled back will be in row_sparse storage with only the specified
----        row_ids present based row_ids (others rows are zeros).
+---       The NDArray pulled back will be in row_sparse storage with only the specified
+---       row_ids present based row_ids (others rows are zeros).
 ---@param handle number @(KVStoreHandle) handle to the kvstore
----@param num number @(mx_uint) the number of key-value pairs
+---@param num number @(uint32_t) the number of key-value pairs
 ---@param keys number @(const int *) the list of keys
 ---@param vals number @(NDArrayHandle *) the list of values
 ---@param row_ids number @(const NDArrayHandle *) the list of row_id NDArrays
@@ -2877,16 +3199,16 @@ _FUNCDEF("MXKVStorePullEx", { "KVStoreHandle", "mx_uint", "const char * *", "NDA
 function M.MXKVStorePullRowSparse(handle, num, keys, vals, row_ids, priority)
     return _CALL("MXKVStorePullRowSparse", handle, num, keys, vals, row_ids, priority)
 end
-_FUNCDEF("MXKVStorePullRowSparse", { "KVStoreHandle", "mx_uint", "const int *", "NDArrayHandle *", "const NDArrayHandle *", "int" }, "int")
+_FUNCDEF("MXKVStorePullRowSparse", { "KVStoreHandle", "uint32_t", "const int *", "NDArrayHandle *", "const NDArrayHandle *", "int" }, "int")
 
 --
 
 --- 
 ---@brief pull a list of (key, value) pairs from the kvstore, where each key is a string.
----        The NDArray pulled back will be in row_sparse storage with only the specified
----        row_ids present based row_ids (others rows are zeros).
+---       The NDArray pulled back will be in row_sparse storage with only the specified
+---       row_ids present based row_ids (others rows are zeros).
 ---@param handle number @(KVStoreHandle) handle to the kvstore
----@param num number @(mx_uint) the number of key-value pairs
+---@param num number @(uint32_t) the number of key-value pairs
 ---@param keys number @(const char * *) the list of keys
 ---@param vals number @(NDArrayHandle *) the list of values
 ---@param row_ids number @(const NDArrayHandle *) the list of row_id NDArrays
@@ -2896,17 +3218,56 @@ _FUNCDEF("MXKVStorePullRowSparse", { "KVStoreHandle", "mx_uint", "const int *", 
 function M.MXKVStorePullRowSparseEx(handle, num, keys, vals, row_ids, priority)
     return _CALL("MXKVStorePullRowSparseEx", handle, num, keys, vals, row_ids, priority)
 end
-_FUNCDEF("MXKVStorePullRowSparseEx", { "KVStoreHandle", "mx_uint", "const char * *", "NDArrayHandle *", "const NDArrayHandle *", "int" }, "int")
+_FUNCDEF("MXKVStorePullRowSparseEx", { "KVStoreHandle", "uint32_t", "const char * *", "NDArrayHandle *", "const NDArrayHandle *", "int" }, "int")
+
+--
+
+--- 
+---@brief push and pull a list of (key, value) pairs from the kvstore
+---@param handle number @(KVStoreHandle) handle to the kvstore
+---@param vnum number @(mx_uint) the number of key-value pairs corresponding to vkeys
+---@param vkeys number @(const int *) the list of keys for the values to be pushed
+---@param onum number @(mx_uint) the number of key-value pairs corresponding to okeys
+---@param okeys number @(const int *) the list of keys for the values to be pulled
+---@param vals number @(NDArrayHandle *) the list of values
+---@param outs number @(NDArrayHandle *) the list of outputs
+---@param priority number @(int) the priority of the action
+---@return number @(int) 0 when success, -1 when failure happens
+--- 
+function M.MXKVStorePushPull(handle, vnum, vkeys, onum, okeys, vals, outs, priority)
+    return _CALL("MXKVStorePushPull", handle, vnum, vkeys, onum, okeys, vals, outs, priority)
+end
+_FUNCDEF("MXKVStorePushPull", { "KVStoreHandle", "mx_uint", "const int *", "mx_uint", "const int *", "NDArrayHandle *", "NDArrayHandle *", "int" }, "int")
+
+--
+
+--- 
+---@brief push and pull a list of (key, value) pairs from the kvstore,
+--- where each key is a string
+---@param handle number @(KVStoreHandle) handle to the kvstore
+---@param vnum number @(mx_uint) the number of key-value pairs corresponding to vkeys
+---@param vkeys number @(const char * *) the list of keys for the values to be pushed
+---@param onum number @(mx_uint) the number of key-value pairs corresponding to okeys
+---@param okeys number @(const char * *) the list of keys for the values to be pulled
+---@param vals number @(NDArrayHandle *) the list of values
+---@param outs number @(NDArrayHandle *) the list of outputs
+---@param priority number @(int) the priority of the action
+---@return number @(int) 0 when success, -1 when failure happens
+--- 
+function M.MXKVStorePushPullEx(handle, vnum, vkeys, onum, okeys, vals, outs, priority)
+    return _CALL("MXKVStorePushPullEx", handle, vnum, vkeys, onum, okeys, vals, outs, priority)
+end
+_FUNCDEF("MXKVStorePushPullEx", { "KVStoreHandle", "mx_uint", "const char * *", "mx_uint", "const char * *", "NDArrayHandle *", "NDArrayHandle *", "int" }, "int")
 
 --
 
 --- 
 ---@brief user-defined updater for the kvstore
 --- It's this updater's responsibility to delete \a recv and \a local
---@param the key
---@param recv the pushed value on this key
---@param local the value stored on local on this key
---@param handle The additional handle to the updater
+---param the key
+---param recv the pushed value on this key
+---param local the value stored on local on this key
+---param handle The additional handle to the updater
 --- 
 _TYPEDEF("MXKVStoreUpdater", "void*")
 
@@ -2915,10 +3276,10 @@ _TYPEDEF("MXKVStoreUpdater", "void*")
 --- 
 ---@brief user-defined updater for the kvstore with string keys
 --- It's this updater's responsibility to delete \a recv and \a local
---@param the key
---@param recv the pushed value on this key
---@param local the value stored on local on this key
---@param handle The additional handle to the updater
+---param the key
+---param recv the pushed value on this key
+---param local the value stored on local on this key
+---param handle The additional handle to the updater
 --- 
 _TYPEDEF("MXKVStoreStrUpdater", "void*")
 
@@ -3061,9 +3422,9 @@ _FUNCDEF("MXKVStoreSetBarrierBeforeExit", { "KVStoreHandle", "const int" }, "int
 
 --- 
 ---@brief the prototype of a server controller
---@param head the head of the command
---@param body the body of the command
---@param controller_handle helper handle for implementing controller
+---param head the head of the command
+---param body the body of the command
+---param controller_handle helper handle for implementing controller
 --- 
 _TYPEDEF("MXKVStoreServerController", "void*")
 
@@ -3102,10 +3463,10 @@ _FUNCDEF("MXKVStoreSendCommmandToServers", { "KVStoreHandle", "int", "const char
 --- 
 ---@param handle number @(KVStoreHandle) handle to the KVStore
 ---@param node_id number @(const int) Can be a node group or a single node.
----                kScheduler = 1, kServerGroup = 2, kWorkerGroup = 4
+---               kScheduler = 1, kServerGroup = 2, kWorkerGroup = 4
 ---@param number number @(int *) Ouptut number of dead nodes
 ---@param timeout_sec number @(const int) A node fails to send heartbeart in {timeout_sec} seconds
----                    will be presumed as 'dead'
+---                   will be presumed as 'dead'
 --- 
 function M.MXKVStoreGetNumDeadNode(handle, node_id, number, timeout_sec)
     return _CALL("MXKVStoreGetNumDeadNode", handle, node_id, number, timeout_sec)
@@ -3237,7 +3598,7 @@ _FUNCDEF("MXRecordIOReaderTell", { "RecordIOHandle", "size_t *" }, "int")
 function M.MXRtcCreate(name, num_input, num_output, input_names, output_names, inputs, outputs, kernel, out)
     return _CALL("MXRtcCreate", name, num_input, num_output, input_names, output_names, inputs, outputs, kernel, out)
 end
-_FUNCDEF("MXRtcCreate", { "char *", "mx_uint", "mx_uint", "char * *", "char * *", "NDArrayHandle *", "NDArrayHandle *", "char *", "RtcHandle *" }, "int")
+_FUNCDEF("MXRtcCreate", { "char *", "uint32_t", "uint32_t", "char * *", "char * *", "NDArrayHandle *", "NDArrayHandle *", "char *", "RtcHandle *" }, "int")
 
 --
 
@@ -3247,7 +3608,7 @@ _FUNCDEF("MXRtcCreate", { "char *", "mx_uint", "mx_uint", "char * *", "char * *"
 function M.MXRtcPush(handle, num_input, num_output, inputs, outputs, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
     return _CALL("MXRtcPush", handle, num_input, num_output, inputs, outputs, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
 end
-_FUNCDEF("MXRtcPush", { "RtcHandle", "mx_uint", "mx_uint", "NDArrayHandle *", "NDArrayHandle *", "mx_uint", "mx_uint", "mx_uint", "mx_uint", "mx_uint", "mx_uint" }, "int")
+_FUNCDEF("MXRtcPush", { "RtcHandle", "uint32_t", "uint32_t", "NDArrayHandle *", "NDArrayHandle *", "uint32_t", "uint32_t", "uint32_t", "uint32_t", "uint32_t", "uint32_t" }, "int")
 
 --
 
@@ -3348,18 +3709,18 @@ _FUNCDEF("MXRtcCudaKernelFree", { "CudaKernelHandle" }, "int")
 ---@param handle number @(CudaKernelHandle) handle to kernel
 ---@param dev_id number @(int) (GPU) device id
 ---@param args number @(void * *) pointer to arguments
----@param grid_dim_x number @(mx_uint) grid dimension x
----@param grid_dim_y number @(mx_uint) grid dimension y
----@param grid_dim_z number @(mx_uint) grid dimension z
----@param block_dim_x number @(mx_uint) block dimension x
----@param block_dim_y number @(mx_uint) block dimension y
----@param block_dim_z number @(mx_uint) block dimension z
----@param shared_mem number @(mx_uint) size of dynamically allocated shared memory
+---@param grid_dim_x number @(uint32_t) grid dimension x
+---@param grid_dim_y number @(uint32_t) grid dimension y
+---@param grid_dim_z number @(uint32_t) grid dimension z
+---@param block_dim_x number @(uint32_t) block dimension x
+---@param block_dim_y number @(uint32_t) block dimension y
+---@param block_dim_z number @(uint32_t) block dimension z
+---@param shared_mem number @(uint32_t) size of dynamically allocated shared memory
 --- 
 function M.MXRtcCudaKernelCall(handle, dev_id, args, grid_dim_x, grid_dim_y, grid_dim_z, block_dim_x, block_dim_y, block_dim_z, shared_mem)
     return _CALL("MXRtcCudaKernelCall", handle, dev_id, args, grid_dim_x, grid_dim_y, grid_dim_z, block_dim_x, block_dim_y, block_dim_z, shared_mem)
 end
-_FUNCDEF("MXRtcCudaKernelCall", { "CudaKernelHandle", "int", "void * *", "mx_uint", "mx_uint", "mx_uint", "mx_uint", "mx_uint", "mx_uint", "mx_uint" }, "int")
+_FUNCDEF("MXRtcCudaKernelCall", { "CudaKernelHandle", "int", "void * *", "uint32_t", "uint32_t", "uint32_t", "uint32_t", "uint32_t", "uint32_t", "uint32_t" }, "int")
 
 --
 
@@ -3381,15 +3742,15 @@ _FUNCDEF("MXNDArrayGetSharedMemHandle", { "NDArrayHandle", "int *", "int *" }, "
 --- Reconstruct NDArray from shared memory handle
 ---@param shared_pid number @(int) shared PID
 ---@param shared_id number @(int) shared memory id
----@param shape number @(const mx_uint *) pointer to NDArray dimensions
----@param ndim number @(mx_uint) number of NDArray dimensions
+---@param shape number @(const uint32_t *) pointer to NDArray dimensions
+---@param ndim number @(uint32_t) number of NDArray dimensions
 ---@param dtype number @(int) data type of NDArray
 ---@param out number @(NDArrayHandle *) constructed NDArray
 --- 
 function M.MXNDArrayCreateFromSharedMem(shared_pid, shared_id, shape, ndim, dtype, out)
     return _CALL("MXNDArrayCreateFromSharedMem", shared_pid, shared_id, shape, ndim, dtype, out)
 end
-_FUNCDEF("MXNDArrayCreateFromSharedMem", { "int", "int", "const mx_uint *", "mx_uint", "int", "NDArrayHandle *" }, "int")
+_FUNCDEF("MXNDArrayCreateFromSharedMem", { "int", "int", "const uint32_t *", "uint32_t", "int", "NDArrayHandle *" }, "int")
 
 --
 
@@ -3424,12 +3785,12 @@ _FUNCDEF("MXNDArrayCreateFromSharedMemEx", { "int", "int", "const int *", "int",
 --- 
 ---@brief Push an asynchronous operation to the engine.
 ---@param async_func number @(EngineAsyncFunc) Execution function whici takes a parameter on_complete
----                   that must be called when the execution ompletes.
+---                  that must be called when the execution ompletes.
 ---@param func_param number @(void *) The parameter set on calling async_func, can be NULL.
 ---@param deleter number @(EngineFuncParamDeleter) The callback to free func_param, can be NULL.
 ---@param ctx_handle number @(ContextHandle) Execution context.
 ---@param const_vars_handle number @(EngineVarHandle) The variables that current operation will use
----                          but not mutate.
+---                         but not mutate.
 ---@param num_const_vars number @(int) The number of const_vars_handle.
 ---@param mutable_vars_handle number @(EngineVarHandle) The variables that current operation will mutate.
 ---@param num_mutable_vars number @(int) The number of mutable_vars_handle.
@@ -3452,7 +3813,7 @@ _FUNCDEF("MXEnginePushAsync", { "EngineAsyncFunc", "void *", "EngineFuncParamDel
 ---@param deleter number @(EngineFuncParamDeleter) The callback to free func_param, can be NULL.
 ---@param ctx_handle number @(ContextHandle) Execution context.
 ---@param const_vars_handle number @(EngineVarHandle) The variables that current operation will use
----                          but not mutate.
+---                         but not mutate.
 ---@param num_const_vars number @(int) The number of const_vars_handle.
 ---@param mutable_vars_handle number @(EngineVarHandle) The variables that current operation will mutate.
 ---@param num_mutable_vars number @(int) The number of mutable_vars_handle.
@@ -3468,16 +3829,40 @@ _FUNCDEF("MXEnginePushSync", { "EngineSyncFunc", "void *", "EngineFuncParamDelet
 --
 
 --- 
+---@brief Create an NDArray from source sharing the same data chunk.
+---@param src number @(NDArrayHandle) source NDArray
+---@param out number @(NDArrayHandle *) new NDArray sharing the same data chunck with src
+--- 
+function M.MXShallowCopyNDArray(src, out)
+    return _CALL("MXShallowCopyNDArray", src, out)
+end
+_FUNCDEF("MXShallowCopyNDArray", { "NDArrayHandle", "NDArrayHandle *" }, "int")
+
+--
+
+--- 
+---@brief Create an Symbol from source sharing the same graph structure.
+---@param src number @(SymbolHandle) source Symbol
+---@param out number @(SymbolHandle *) new Symbol sharing the same graph structure with src
+--- 
+function M.MXShallowCopySymbol(src, out)
+    return _CALL("MXShallowCopySymbol", src, out)
+end
+_FUNCDEF("MXShallowCopySymbol", { "SymbolHandle", "SymbolHandle *" }, "int")
+
+--
+
+--- 
 ---@brief Push an asynchronous operation to the engine.
 ---@param async_func number @(EngineAsyncFunc) Execution function whici takes a parameter on_complete
----                   that must be called when the execution ompletes.
+---                  that must be called when the execution ompletes.
 ---@param func_param number @(void *) The parameter set on calling async_func, can be NULL.
 ---@param deleter number @(EngineFuncParamDeleter) The callback to free func_param, can be NULL.
 ---@param ctx_handle number @(ContextHandle) Execution context.
----@param const_nds_handle number @(NDArrayHandle) The NDArrays that current operation will use
----                          but not mutate.
+---@param const_nds_handle number @(NDArrayHandle *) The NDArrays that current operation will use
+---                         but not mutate.
 ---@param num_const_nds number @(int) The number of const_nds_handle.
----@param mutable_nds_handle number @(NDArrayHandle) The NDArrays that current operation will mutate.
+---@param mutable_nds_handle number @(NDArrayHandle *) The NDArrays that current operation will mutate.
 ---@param num_mutable_nds number @(int) The number of mutable_nds_handle.
 ---@param prop_handle number @(EngineFnPropertyHandle) Property of the function.
 ---@param priority number @(int) Priority of the action, as hint to the engine.
@@ -3487,7 +3872,7 @@ _FUNCDEF("MXEnginePushSync", { "EngineSyncFunc", "void *", "EngineFuncParamDelet
 function M.MXEnginePushAsyncND(async_func, func_param, deleter, ctx_handle, const_nds_handle, num_const_nds, mutable_nds_handle, num_mutable_nds, prop_handle, priority, opr_name, wait)
     return _CALL("MXEnginePushAsyncND", async_func, func_param, deleter, ctx_handle, const_nds_handle, num_const_nds, mutable_nds_handle, num_mutable_nds, prop_handle, priority, opr_name, wait)
 end
-_FUNCDEF("MXEnginePushAsyncND", { "EngineAsyncFunc", "void *", "EngineFuncParamDeleter", "ContextHandle", "NDArrayHandle", "int", "NDArrayHandle", "int", "EngineFnPropertyHandle", "int", "const char *", "bool" }, "int")
+_FUNCDEF("MXEnginePushAsyncND", { "EngineAsyncFunc", "void *", "EngineFuncParamDeleter", "ContextHandle", "NDArrayHandle *", "int", "NDArrayHandle *", "int", "EngineFnPropertyHandle", "int", "const char *", "bool" }, "int")
 
 --
 
@@ -3497,10 +3882,10 @@ _FUNCDEF("MXEnginePushAsyncND", { "EngineAsyncFunc", "void *", "EngineFuncParamD
 ---@param func_param number @(void *) The parameter set on calling sync_func, can be NULL.
 ---@param deleter number @(EngineFuncParamDeleter) The callback to free func_param, can be NULL.
 ---@param ctx_handle number @(ContextHandle) Execution context.
----@param const_nds_handle number @(NDArrayHandle) The NDArrays that current operation will use
----                          but not mutate.
+---@param const_nds_handle number @(NDArrayHandle *) The NDArrays that current operation will use
+---                         but not mutate.
 ---@param num_const_nds number @(int) The number of const_nds_handle.
----@param mutable_nds_handle number @(NDArrayHandle) The NDArrays that current operation will mutate.
+---@param mutable_nds_handle number @(NDArrayHandle *) The NDArrays that current operation will mutate.
 ---@param num_mutable_nds number @(int) The number of mutable_nds_handle.
 ---@param prop_handle number @(EngineFnPropertyHandle) Property of the function.
 ---@param priority number @(int) Priority of the action, as hint to the engine.
@@ -3509,7 +3894,7 @@ _FUNCDEF("MXEnginePushAsyncND", { "EngineAsyncFunc", "void *", "EngineFuncParamD
 function M.MXEnginePushSyncND(sync_func, func_param, deleter, ctx_handle, const_nds_handle, num_const_nds, mutable_nds_handle, num_mutable_nds, prop_handle, priority, opr_name)
     return _CALL("MXEnginePushSyncND", sync_func, func_param, deleter, ctx_handle, const_nds_handle, num_const_nds, mutable_nds_handle, num_mutable_nds, prop_handle, priority, opr_name)
 end
-_FUNCDEF("MXEnginePushSyncND", { "EngineSyncFunc", "void *", "EngineFuncParamDeleter", "ContextHandle", "NDArrayHandle", "int", "NDArrayHandle", "int", "EngineFnPropertyHandle", "int", "const char *" }, "int")
+_FUNCDEF("MXEnginePushSyncND", { "EngineSyncFunc", "void *", "EngineFuncParamDeleter", "ContextHandle", "NDArrayHandle *", "int", "NDArrayHandle *", "int", "EngineFnPropertyHandle", "int", "const char *" }, "int")
 
 --
 
@@ -3551,11 +3936,11 @@ _FUNCDEF("NNAPISetLastError", { "const char *" }, "void")
 --- 
 ---@brief return str message of the last error
 ---  all function in this file will return 0 when success
----  and -1 when an error occured,
+---  and -1 when an error occurred,
 ---  NNGetLastError can be called to retrieve the error
 --- 
 ---  this function is threadsafe and can be called by different thread
----  \return error info
+---@return string @(const char *) error info
 --- 
 function M.NNGetLastError()
     return _CALL("NNGetLastError")
