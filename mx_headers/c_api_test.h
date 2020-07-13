@@ -31,13 +31,11 @@
  * to the input graph for partitioning. This function should be
  * used only for the testing purpose.
  */
- 
 int MXBuildSubgraphByOpNames(SymbolHandle sym_handle,
                                         const char* prop_name,
-                                        const mx_uint num_ops,
+                                        const uint32_t num_ops,
                                         const char** op_names,
                                         SymbolHandle* ret_sym_handle);
-
 
 /*!
  * \brief Given a subgraph property name, use the provided op names
@@ -45,7 +43,7 @@ int MXBuildSubgraphByOpNames(SymbolHandle sym_handle,
  * the predefined one. This is only for the purpose of testing.
  */
 int MXSetSubgraphPropertyOpNames(const char* prop_name,
-                                           const mx_uint num_ops,
+                                           const uint32_t num_ops,
                                            const char** op_names);
 
 /*!
